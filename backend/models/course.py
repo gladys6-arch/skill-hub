@@ -15,4 +15,9 @@ class Module(db.Model):
     content = db.Column(db.Text)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
 
-
+class Enrollment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
+    progress = db.Column(db.Integer, default=0)
+    completed = db.Column(db.Boolean, default=False)
