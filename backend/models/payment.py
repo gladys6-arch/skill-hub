@@ -8,3 +8,8 @@ class Payment(db.Model):
    teacher_share = db.Column(db.Float)
    admin_share = db.Column(db.Float)
    status = db.Column(db.String(20), default = 'paid')
+
+   #relationships
+   student = db.relationship('User', back_populates='payments')
+   course = db.relationship('Course', back_populates='payments')
+
