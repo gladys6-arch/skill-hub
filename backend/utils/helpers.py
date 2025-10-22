@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 def format_datetime(dt=None):
@@ -7,3 +8,5 @@ def format_datetime(dt=None):
 
 def success_response(message, data=None):
     return {"success": True, "message": message, "data": data}
+
+

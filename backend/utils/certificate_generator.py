@@ -1,3 +1,4 @@
+
 import os
 
 def generate_certificate(student_name, course_title):
@@ -7,3 +8,4 @@ def generate_certificate(student_name, course_title):
         f.write(f"Certificate of Completion\n")
         f.write(f"This certifies that {student_name} has successfully completed {course_title}.\n")
     return file_name
+
