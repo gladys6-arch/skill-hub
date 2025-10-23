@@ -1,12 +1,14 @@
-
+import re
 from datetime import datetime
 
-def format_datetime(dt=None):
-    if dt is None:
-        dt = datetime.utcnow()
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+def validate_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
 
-def success_response(message, data=None):
-    return {"success": True, "message": message, "data": data}
+def format_currency(amount):
+    return f"KSH {amount:,.2f}"
 
-
+def calculate_progress(completed_modules, total_modules):
+    if total_modules == 0:
+        return 0
+    return (completed_modules / total_modules) * 100
