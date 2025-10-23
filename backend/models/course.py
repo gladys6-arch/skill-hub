@@ -1,11 +1,6 @@
 from extensions import db
 
-#student and skill many to many relationship
-student_skill = db.Table(
-    'student_skill',
-    db.Column('student_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('skill_id', db.Integer, db.ForeignKey('skill.id'), primary_key=True)
-)
+
 
 
 class Course(db.Model):
@@ -14,11 +9,7 @@ class Course(db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Float)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    modules = db.relationship('Module', back_populates='course', lazy=True)
-
-
-# Relationships 
-
+    # Relationships
     teacher = db.relationship('User', back_populates='taught_courses')
     modules = db.relationship('Module', back_populates='course', cascade="all, delete-orphan")
     enrollments = db.relationship('Enrollment', back_populates='course', cascade="all, delete-orphan")
@@ -28,7 +19,7 @@ class Course(db.Model):
     ratings = db.relationship('Rating', back_populates='course', cascade="all, delete-orphan")
 
 class Skill(db.Model):
-    __tablename__='skill'
+    __tablename__='skills'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
 

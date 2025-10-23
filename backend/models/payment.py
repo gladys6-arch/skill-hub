@@ -2,7 +2,7 @@ from extensions import db
 
 class Payment(db.Model):
    id  = db.Column(db.Integer, primary_key=True)
-   student_id = db.Column(db.Integer, db.FOreignKey('user.id'))
+   student_id = db.Column(db.Integer, db.ForeignKey('user.id'))
    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
    amount = db.Column(db.Float)
    teacher_share = db.Column(db.Float)
