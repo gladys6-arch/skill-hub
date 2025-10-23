@@ -1,4 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
+import SQLAlchemy
 from flask_jwt_extended import JWTManager
 
 db = SQLAlchemy()
