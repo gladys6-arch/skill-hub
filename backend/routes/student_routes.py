@@ -1,64 +1,48 @@
 from flask import Blueprint, request, jsonify
-from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import User, Course, Enrollment
+from extensions import db
 from utils.decorators import role_required
-from models.course import Course, Enrollment
 
-student_bp = Blueprint('student_bp', __name__)
+student_bp = Blueprint('student', __name__)
 
-@student_bp.route('/student/enroll', methods=['POST'])
+@student_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 @role_required('student')
-def enroll_course():
-    user = get_jwt_identity()
+def dashboard():
+    student_id = get_jwt_identity()
+    enrollments = Enrollment.query.filter_by(student_id=student_id).all()
+    
+    return jsonify([{
+        'course_id': e.course_id,
+        'progress': e.progress,
+        'completed': e.completed
+    } for e in enrollments])
+
+@student_bp.route('/courses', methods=['GET'])
+@jwt_required()
+def get_courses():
+    courses = Course.query.all()
+    return jsonify([{
+        'id': c.id,
+        'title': c.title,
+        'description': c.description,
+        'price': c.price
+    } for c in courses])
+
+@student_bp.route('/enroll', methods=['POST'])
+@jwt_required()
+@role_required('student')
+def enroll():
     data = request.get_json()
-    course_id = data.get('course_id')
-
-    if not course_id:
-        return jsonify({"msg": "Course ID required"}), 400
-
-    already = Enrollment.query.filter_by(student_id=user['id'], course_id=course_id).first()
-    if already:
-        return jsonify({"msg": "Already enrolled"}), 400
-
-    enrollment = Enrollment(student_id=user['id'], course_id=course_id)
+    student_id = get_jwt_identity()
+    
+    enrollment = Enrollment(
+        student_id=student_id,
+        course_id=data['course_id']
+    )
+    
     db.session.add(enrollment)
     db.session.commit()
-    return jsonify({"msg": "Enrolled successfully"}), 201
-
-
-@student_bp.route('/student/progress/<int:course_id>', methods=['GET'])
-@jwt_required()
-@role_required('student')
-def view_progress(course_id):
-    user = get_jwt_identity()
-    enrollment = Enrollment.query.filter_by(student_id=user['id'], course_id=course_id).first()
-    if not enrollment:
-        return jsonify({"msg": "Not enrolled"}), 404
-
-    return jsonify({
-        "course_id": course_id,
-        "progress": enrollment.progress,
-        "completed": enrollment.completed
-    })
-
-
-@student_bp.route('/student/update-progress', methods=['PUT'])
-@jwt_required()
-@role_required('student')
-def update_progress():
-    user = get_jwt_identity()
-    data = request.get_json()
-    course_id = data.get('course_id')
-    progress = data.get('progress', 0)
-
-    enrollment = Enrollment.query.filter_by(student_id=user['id'], course_id=course_id).first()
-    if not enrollment:
-        return jsonify({"msg": "Not enrolled"}), 404
-
-    enrollment.progress = progress
-    if progress >= 100:
-        enrollment.completed = True
-
-    db.session.commit()
-    return jsonify({"msg": "Progress updated"})
+    
+    return jsonify({'message': 'Enrolled successfully'}), 201
