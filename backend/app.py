@@ -4,7 +4,7 @@ from extensions import db, jwt
 from config import Config
 
 def create_app():
-    app = Flask(name)
+    app = Flask(__name__)
     app.config.from_object(Config)
 
     CORS(app)
@@ -27,7 +27,7 @@ def create_app():
 
     return app
 
-if name == 'main':
+if __name__ == '__main__':
     app = create_app()
     with app.app_context():
         db.create_all()
