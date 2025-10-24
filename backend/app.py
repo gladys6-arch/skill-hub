@@ -5,7 +5,7 @@ from config import Config
 from datetime import datetime
 
 def create_app():
-    app = Flask(__name__) 
+    app = Flask(__name__)  
     app.config.from_object(Config)
 
     CORS(app)
