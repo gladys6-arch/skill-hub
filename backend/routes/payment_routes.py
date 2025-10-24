@@ -6,6 +6,17 @@ from utils.decorators import role_required
 
 payment_bp = Blueprint('payment', __name__)
 
+@payment_bp.route('/', methods=['GET'])
+def payment_info():
+    return jsonify({
+        'message': 'SkillHub Payment API',
+        'endpoints': {
+            'process': 'POST /api/payment/process',
+            'history': 'GET /api/payment/history'
+        },
+        'status': 'active'
+    })
+
 @payment_bp.route('/process', methods=['POST'])
 @jwt_required()
 @role_required('student')
