@@ -94,4 +94,23 @@ def seed_data():
             Module(title="Flask Setup", content="Setting up Flask", course_id=course3.id)
         ]
         db.session.add_all(modules)
+
+        # Create Enrollments
+        enrollments = [
+            Enrollment(student_id=student1.id, course_id=course1.id, progress=50),
+            Enrollment(student_id=student1.id, course_id=course2.id, progress=25),
+            Enrollment(student_id=student2.id, course_id=course1.id, progress=100, completed=True),
+            Enrollment(student_id=student2.id, course_id=course3.id, progress=75)
+        ]
+        db.session.add_all(enrollments)
+        
+        db.session.commit()
+        print("✅ Database seeded successfully!")
+        print("\n📋 Test Accounts:")
+        print("Admin: admin@skillhub.com / admin123")
+        print("Teacher: teacher@skillhub.com / teacher123")
+        print("Student: student@skillhub.com / student123")
+
+if __name__ == '__main__':
+    seed_data()
         
