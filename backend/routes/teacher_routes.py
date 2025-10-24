@@ -1,56 +1,114 @@
-from flask import Blueprint, request, jsonify
+teacher.py                                                                                                                                                                                                                                                    from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import User, Course, Module
+from models import User, Course, Enrollment, Review
 from extensions import db
 from utils.decorators import role_required
 
-teacher_bp = Blueprint('teacher', __name__)
+student_bp = Blueprint('student', __name__)
 
-@teacher_bp.route('/dashboard', methods=['GET'])
+# Profile CRUD
+@student_bp.route('/profile', methods=['GET'])
 @jwt_required()
-@role_required('teacher')
-def dashboard():
-    teacher_id = get_jwt_identity()
-    courses = Course.query.filter_by(teacher_id=teacher_id).all()
+@role_required('student')
+def get_profile():
+    student_id = get_jwt_identity()
+    user = User.query.get_or_404(student_id)
+    return jsonify({
+        'id': user.id,
+        'full_name': user.full_name,
+        'email': user.email
+    })
+
+@student_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+@role_required('student')
+def update_profile():
+    student_id = get_jwt_identity()
+    user = User.query.get_or_404(student_id)
     
+    data = request.get_json()
+    user.full_name = data.get('full_name', user.full_name)
+    user.email = data.get('email', user.email)
+    
+    db.session.commit()
+    return jsonify({'message': 'Profile updated successfully'})
+
+# Enrollments CRUD
+@student_bp.route('/enrollments', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_enrollments():
+    student_id = get_jwt_identity()
+    enrollments = Enrollment.query.filter_by(student_id=student_id).all()
     return jsonify([{
-        'id': c.id,
-        'title': c.title,
-        'price': c.price
-    } for c in courses])
+        'id': e.id,
+        'course_id': e.course_id,
+        'progress': e.progress,
+        'completed': e.completed
+    } for e in enrollments])
 
-@teacher_bp.route('/add-course', methods=['POST'])
+@student_bp.route('/enrollments/<int:enrollment_id>', methods=['PUT'])
 @jwt_required()
-@role_required('teacher')
-def add_course():
-    data = request.get_json()
-    teacher_id = get_jwt_identity()
+@role_required('student')
+def update_progress(enrollment_id):
+    student_id = get_jwt_identity()
+    enrollment = Enrollment.query.filter_by(
+        id=enrollment_id, 
+        student_id=student_id
+    ).first_or_404()
     
-    course = Course(
-        title=data['title'],
-        description=data['description'],
-        price=data['price'],
-        teacher_id=teacher_id
+    data = request.get_json()
+    enrollment.progress = data.get('progress', enrollment.progress)
+    if enrollment.progress >= 100:
+        enrollment.completed = True
+    
+    db.session.commit()
+    return jsonify({'message': 'Progress updated successfully'})
+
+# Reviews CRUD
+@student_bp.route('/reviews', methods=['POST'])
+@jwt_required()
+@role_required('student')
+def create_review():
+    student_id = get_jwt_identity()
+    data = request.get_json()
+    
+    review = Review(
+        student_id=student_id,
+        course_id=data['course_id'],
+        comment=data['comment']
     )
     
-    db.session.add(course)
+    db.session.add(review)
     db.session.commit()
-    
-    return jsonify({'message': 'Course created successfully'}), 201
+    return jsonify({'message': 'Review created successfully'}), 201
 
-@teacher_bp.route('/add-module', methods=['POST'])
+@student_bp.route('/reviews/<int:review_id>', methods=['PUT'])
 @jwt_required()
-@role_required('teacher')
-def add_module():
+@role_required('student')
+def update_review(review_id):
+    student_id = get_jwt_identity()
+    review = Review.query.filter_by(
+        id=review_id, 
+        student_id=student_id
+    ).first_or_404()
+    
     data = request.get_json()
+    review.comment = data.get('comment', review.comment)
     
-    module = Module(
-        title=data['title'],
-        content=data['content'],
-        course_id=data['course_id']
-    )
-    
-    db.session.add(module)
     db.session.commit()
+    return jsonify({'message': 'Review updated successfully'})
+
+@student_bp.route('/reviews/<int:review_id>', methods=['DELETE'])
+@jwt_required()
+@role_required('student')
+def delete_review(review_id):
+    student_id = get_jwt_identity()
+    review = Review.query.filter_by(
+        id=review_id, 
+        student_id=student_id
+    ).first_or_404()
     
-    return jsonify({'message': 'Module added successfully'}), 201
+    db.session.delete(review)
+    db.session.commit()
+    return jsonify({'message': 'Review deleted successfully'})
