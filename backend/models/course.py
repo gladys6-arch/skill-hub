@@ -1,5 +1,5 @@
 from extensions import db
-
+from .user import student_skill
 
 
 
@@ -19,7 +19,7 @@ class Course(db.Model):
     ratings = db.relationship('Rating', back_populates='course', cascade="all, delete-orphan")
 
 class Skill(db.Model):
-    __tablename__='skills'
+    __tablename__='skill'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
 
