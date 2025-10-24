@@ -84,4 +84,14 @@ def seed_data():
         
         db.session.add_all([course1, course2, course3])
         db.session.commit()
+
+         # Create Modules
+        modules = [
+            Module(title="Introduction to Python", content="Basic Python concepts", course_id=course1.id),
+            Module(title="Variables and Data Types", content="Python data types", course_id=course1.id),
+            Module(title="React Basics", content="Introduction to React", course_id=course2.id),
+            Module(title="Components", content="React components", course_id=course2.id),
+            Module(title="Flask Setup", content="Setting up Flask", course_id=course3.id)
+        ]
+        db.session.add_all(modules)
         
