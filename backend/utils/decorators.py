@@ -13,6 +13,6 @@ def role_required(role):
             if not user or user.role != role:
                 return jsonify({'message': 'Access denied'}), 403
 
-            return f(args, **kwargs)
+            return f(*args, **kwargs)
         return decorated_function
     return decorator
