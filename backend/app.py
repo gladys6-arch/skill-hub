@@ -12,11 +12,11 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
 
-    from routes.auth import auth_bp
-    from routes.admin import admin_bp
-    from routes.teacher import teacher_bp
-    from routes.student import student_bp
-    from routes.payment import payment_bp
+    from routes.auth_routes import auth_bp
+    from routes.admin_routes import admin_bp
+    from routes.teacher_routes import teacher_bp
+    from routes.student_routes import student_bp
+    from routes.payment_routes import payment_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')

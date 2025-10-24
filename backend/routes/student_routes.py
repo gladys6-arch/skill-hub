@@ -1,10 +1,22 @@
-student.py                                                                                                                                                                                                                                                         from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import User, Course, Enrollment, Review
 from extensions import db
 from utils.decorators import role_required
 
 student_bp = Blueprint('student', __name__)
+
+@student_bp.route('/', methods=['GET'])
+def student_info():
+    return jsonify({
+        'message': 'SkillHub Student API',
+        'endpoints': {
+            'dashboard': 'GET /api/student/dashboard',
+            'profile': 'GET /api/student/profile',
+            'courses': 'GET /api/student/courses'
+        },
+        'status': 'active'
+    })
 
 # Profile CRUD
 @student_bp.route('/profile', methods=['GET'])
