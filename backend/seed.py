@@ -51,4 +51,37 @@ def seed_data():
         db.session.add_all([admin, teacher1, teacher2, student1, student2])
         db.session.commit()
         
+        # Create Skills
+        skills = [
+            Skill(name="Python"),
+            Skill(name="JavaScript"),
+            Skill(name="React"),
+            Skill(name="Flask")
+        ]
+        db.session.add_all(skills)
+        db.session.commit()
+        
+        # Create Courses
+        course1 = Course(
+            title="Python for Beginners",
+            description="Learn Python programming from scratch",
+            price=99.99,
+            teacher_id=teacher1.id
+        )
+        
+        course2 = Course(
+            title="React Development",
+           description="Build modern web apps with React",
+            price=149.99,
+            teacher_id=teacher2.id )
+        
+        course3 = Course(
+            title="Flask API Development",
+            description="Create REST APIs with Flask",
+            price=129.99,
+            teacher_id=teacher1.id
+        )
+        
+        db.session.add_all([course1, course2, course3])
+        db.session.commit()
         
