@@ -1,12 +1,11 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
-import Login from './pages/Auth/Login'
-import Register from './pages/Auth/Register'
-import AdminRoutes from './routes/AdminRoutes'
-import TeacherRoutes from './routes/TeacherRoutes'
-import StudentRoutes from './routes/StudentRoutes'
+import Login from './pages/login'
+import Register from './pages/register'
+import AdminRoutes from './Routes/AdminRoutes'
+import TeacherRoutes from './Routes/TeacherRoutes'
+import StudentRoutes from './Routes/StudentRoutes'
 
 function App() {
   return (
@@ -28,7 +27,3 @@ function App() {
 }
 
 export default App
-
-  
-      
-       
