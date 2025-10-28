@@ -1,5 +1,4 @@
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 
-const API = "http://localhost:5000/teacher";
-
-export const addSkill = (data) => axios.post(`${API}/add-skill`, data);
+export const addSkill = (data) => axios.post(`${API_BASE_URL}/teacher/add-skill`, data);
