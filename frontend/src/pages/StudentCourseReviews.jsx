@@ -1,8 +1,8 @@
 import React from "react";
-import CourseReviews from "../components/CourseReviews";
+import CourseReview from "../components/CourseReview";
 
-export default function StudentCourseReviews() {
-  const courseId = 1; // replace with dynamic id or selection later
+export default function StudentCourseReview() {
+  const courseId = 1; 
 
   return (
     <div>
