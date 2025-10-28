@@ -1,29 +1,29 @@
-import { useEffect, useState } from "react";
-import { getAllUsers } from "./services/adminService";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import Navbar from './components/Navbar'
+import Login from './pages/Auth/Login'
+import Register from './pages/Auth/Register'
+import AdminRoutes from './routes/AdminRoutes'
+import TeacherRoutes from './routes/TeacherRoutes'
+import StudentRoutes from './routes/StudentRoutes'
 
 function App() {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    getAllUsers()
-      .then((res) => setUsers(res.data))
-      .catch((err) => console.error(err));
-  }, []);
-
   return (
-    <div style={{ padding: "1rem" }}>
-      <h1>All Users</h1>
-      {users.length > 0 ? (
-        <ul>
-          {users.map((user) => (
-            <li key={user._id}>{user.name}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No users found.</p>
-      )}
-    </div>
-  );
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Navbar />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route path="/teacher/*" element={<TeacherRoutes />} />
+            <Route path="/student/*" element={<StudentRoutes />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  )
 }
 
-export default App;
+export default App
