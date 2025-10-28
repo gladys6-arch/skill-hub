@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import { getAllUsers } from "./services/adminService";
+import AdminRoutes from './Routes/AdminRoutes';
+import TeacherRoutes from './Routes/TeacherRoutes';
+import StudentRoutes from './Routes/StudentRoutes';
+import Login from './pages/login';
+import Register from './pages/register';
+
 
 function App() {
   const [users, setUsers] = useState([]);
