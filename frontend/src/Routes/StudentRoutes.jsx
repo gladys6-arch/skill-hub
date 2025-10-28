@@ -4,6 +4,7 @@ import StudentDashboard from '../pages/StudentDashboard';
 import AvailableCourses from '../pages/AvailableCourses';
 import Progress from '../pages/Progress';
 import Certificate from '../pages/Certificate';
+import StudentCourseReviews from '../pages/StudentCourseReviews';
 
 export default function StudentRoutes() {
   return (
@@ -12,6 +13,7 @@ export default function StudentRoutes() {
       <Route path="/courses" element={<AvailableCourses />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/certificate" element={<Certificate />} />
+      <Route path="/reviews" element={<StudentCourseReviews />} />
     </Routes>
   );
 }

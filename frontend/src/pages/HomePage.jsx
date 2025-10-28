@@ -5,7 +5,7 @@ function HomePage() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1>Welcome to SkillSwap</h1>
+        <h1>Welcome to Skill Hub</h1>
         <p>A platform for connecting learners and teachers to share skills and knowledge.</p>
       </header>
 
@@ -13,7 +13,7 @@ function HomePage() {
         <section style={styles.section}>
           <h2>Get Started</h2>
           <p>
-            Join SkillSwap today — register as a teacher or a student, log in, and start
+            Join Skill Hub today — register as a teacher or a student, log in, and start
             sharing or learning new skills.
           </p>
           <div style={styles.buttonGroup}>
