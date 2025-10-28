@@ -1,32 +1,112 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
+function Register() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    role: "student", // default role
+  });
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await axios.post('http://localhost:5000/auth/register', form);
-      alert('Registration successful');
+      const response = await fetch("http://127.0.0.1:5000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.msg || "Registration failed. Try again.");
+        setMessage("");
+        return;
+      }
+
+      setMessage("Registration successful! You can now log in.");
+      setError("");
+      
+      // Redirect to login page after a short delay
+      setTimeout(() => navigate("/login"), 1500);
+
     } catch (err) {
-      alert('Error registering');
+      console.error("Registration error:", err);
+      setError("Something went wrong. Please try again later.");
     }
   };
 
   return (
-    <div className="container mt-5">
+    <div>
       <h2>Register</h2>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <p style={{ color: "green" }}>{message}</p>}
+
       <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Name" onChange={(e) => setForm({ ...form, name: e.target.value })} /><br/>
-        <input type="email" placeholder="Email" onChange={(e) => setForm({ ...form, email: e.target.value })} /><br/>
-        <input type="password" placeholder="Password" onChange={(e) => setForm({ ...form, password: e.target.value })} /><br/>
-        <select onChange={(e) => setForm({ ...form, role: e.target.value })}>
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-        </select><br/>
+        <div>
+          <label>Full Name:</label><br />
+          <input
+            type="text"
+            name="full_name"
+            value={formData.full_name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Email:</label><br />
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Password:</label><br />
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Role:</label><br />
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            required
+          >
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+
         <button type="submit">Register</button>
       </form>
     </div>
   );
 }
+
+export default Register;
