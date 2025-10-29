@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx"; // ✅ use context
+import { useAuth } from "../context/AuthContext.jsx"; // use context
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ use global login function
+  const { login } = useAuth(); // use global login function
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,13 +26,13 @@ function Login() {
         return;
       }
 
-      // ✅ Save token locally
+      // Save token locally
       localStorage.setItem("token", data.token);
 
-      // ✅ Save user globally using AuthContext
+      // Save user globally using AuthContext
       login({ email, role: data.role });
 
-      // ✅ Redirect to role-based dashboard
+      // Redirect to role-based dashboard
       if (data.role === "admin") navigate("/admin");
       else if (data.role === "teacher") navigate("/teacher");
       else if (data.role === "student") navigate("/student");
