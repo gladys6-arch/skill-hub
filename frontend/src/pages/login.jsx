@@ -26,11 +26,8 @@ function Login() {
         return;
       }
 
-      // Save token locally
-      localStorage.setItem("token", data.token);
-
       // Save user globally using AuthContext
-      login({ email, role: data.role });
+      login({ email, role: data.role, token: data.token });
 
       // Redirect to role-based dashboard
       if (data.role === "admin") navigate("/admin");
