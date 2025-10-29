@@ -43,4 +43,12 @@ yarn-error.log*
 
 # OS
 .DS_Store
+<<<<<<< HEAD
 Thumbs.db
+=======
+Thumbs.db__pycache__/
+*.pyc
+>>>>>>> ab5908269a2cf443a041aad2bd82bf3bf698c2f1
+venv/
+__pycache__/
+*.pyc
