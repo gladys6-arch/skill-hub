@@ -1,11 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider } from './components/AuthContext'
 import Navbar from './components/Navbar'
-import Login from './pages/Auth/Login'
-import Register from './pages/Auth/Register'
-import AdminRoutes from './routes/AdminRoutes'
-import TeacherRoutes from './routes/TeacherRoutes'
-import StudentRoutes from './routes/StudentRoutes'
+import HomePage from "./pages/HomePage";
+import Login from './pages/login'
+import Register from './pages/register'
+import AdminRoutes from './Routes/AdminRoutes'
+import TeacherRoutes from './Routes/TeacherRoutes'
+import StudentRoutes from './Routes/StudentRoutes'
+import './App.css'
 
 function App() {
   return (
@@ -14,6 +16,7 @@ function App() {
         <div className="App">
           <Navbar />
           <Routes>
+            <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin/*" element={<AdminRoutes />} />

@@ -5,6 +5,17 @@ from extensions import db
 
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/', methods=['GET'])
+def auth_info():
+    return jsonify({
+        'message': 'SkillHub Auth API',
+        'endpoints': {
+            'login': 'POST /api/auth/login',
+            'register': 'POST /api/auth/register'
+        },
+        'status': 'active'
+    })
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()

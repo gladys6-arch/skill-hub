@@ -16,9 +16,6 @@ def create_app():
     from routes.teacher_routes import teacher_bp
     from routes.student_routes import student_bp
     from routes.payment_routes import payment_bp
-    from routes.course_routes import course_bp 
-
-
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
