@@ -50,11 +50,12 @@ function Register() {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Register</h2>
+      <p className="form-description">Create your account to get started with Skill Hub.</p>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+      {message && <p style={{ color: "green", marginBottom: "1rem" }}>{message}</p>}
 
       <form onSubmit={handleSubmit}>
         <div>
@@ -90,7 +91,7 @@ function Register() {
           />
         </div>
 
-        <div>
+        <div className="role-selection">
           <label>Role:</label><br />
           <select
             name="role"

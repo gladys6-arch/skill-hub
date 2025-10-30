@@ -41,9 +41,10 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <p className="form-description">Welcome back! Please sign in to your account.</p>
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <div>
