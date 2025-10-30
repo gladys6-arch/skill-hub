@@ -21,9 +21,13 @@ class Course(db.Model):
 class Skill(db.Model):
     __tablename__='skill'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True)
+    name = db.Column(db.String(100), unique=True)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     students = db.relationship('User', secondary=student_skill, back_populates='skills')
+    teacher = db.relationship('User', foreign_keys=[teacher_id])
 
 
 

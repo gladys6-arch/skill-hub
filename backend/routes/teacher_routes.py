@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import User, Course, Module
+from models import User, Course, Module,Skill
 from extensions import db
 from utils.decorators import role_required
 
@@ -31,6 +31,31 @@ def dashboard():
         'description': c.description,
         'price': c.price
     } for c in courses])
+
+
+@teacher_bp.route('/add-skill', methods=['POST'])
+@jwt_required()
+@role_required('teacher')
+def add_skill():
+    data = request.get_json()
+    teacher_id = get_jwt_identity()
+    
+    # Check if skill already exists
+    existing_skill = Skill.query.filter_by(name=data['name']).first()
+    if existing_skill:
+        return jsonify({'message': 'Skill already exists'}), 400
+    
+    skill = Skill(
+        name=data['name'],
+        description=data['description'],
+        price=data['price'],
+        teacher_id=teacher_id
+    )
+    db.session.add(skill)
+    db.session.commit()
+    
+    return jsonify({'message': 'Skill added successfully'}), 201
+
 
 @teacher_bp.route('/courses', methods=['GET'])
 @jwt_required()
