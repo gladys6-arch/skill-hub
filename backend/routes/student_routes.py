@@ -62,3 +62,29 @@ def update_progress():
 
     db.session.commit()
     return jsonify({"msg": "Progress updated"})
+
+
+
+
+@student_bp.route('/courses', methods=['GET'])
+def get_courses():
+    courses = Course.query.all()
+    return jsonify([{
+        'id': course.id,
+        'title': course.title,
+        'description': course.description,
+        'price': course.price,
+        'teacher_name': course.teacher.full_name if course.teacher else None
+    } for course in courses])
+
+
+@student_bp.route('/course/<int:course_id>', methods=['GET'])
+def get_course_details(course_id):
+    course = Course.query.get_or_404(course_id)
+    return jsonify({
+        'id': course.id,
+        'title': course.title,
+        'description': course.description,
+        'price': course.price,
+        'teacher_name': course.teacher.full_name if course.teacher else None
+    })
