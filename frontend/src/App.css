@@ -83,7 +83,7 @@ width: 100%;
 color: var(--accent-color);
 }
 
-/* Menu Toggle  */
+/* Menu Toggle */
 .menu-toggle {
 display: none;
 flex-direction: column;
@@ -235,7 +235,7 @@ button:active, .btn:active {
 transform: scale(0.98);
 }
 
-/* Home Page styling */
+/* Home Page */
 .home-container {
 background: var(--card-bg);
 border-radius: var(--border-radius);
@@ -267,7 +267,7 @@ justify-content: center;
 flex-wrap: wrap;
 }
 
-/* Dashboard  styling */
+/* Dashboard */
 .dashboard-container {
 background: var(--card-bg);
 border-radius: var(--border-radius);
@@ -394,7 +394,7 @@ text-align: center;
 font-style: italic;
 }
 
-/* Dashboard Access */
+/* Dashboard Access (Logged In) */
 .dashboard-access {
 margin-top: 3rem;
 padding-top: 2rem;

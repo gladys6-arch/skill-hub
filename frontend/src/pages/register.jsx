@@ -59,8 +59,9 @@ function Register() {
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Full Name:</label><br />
+          <label htmlFor="full_name">Full Name:</label><br />
           <input
+            id="full_name"
             type="text"
             name="full_name"
             value={formData.full_name}
@@ -70,8 +71,9 @@ function Register() {
         </div>
 
         <div>
-          <label>Email:</label><br />
+          <label htmlFor="email">Email:</label><br />
           <input
+            id="email"
             type="email"
             name="email"
             value={formData.email}
@@ -81,8 +83,9 @@ function Register() {
         </div>
 
         <div>
-          <label>Password:</label><br />
+          <label htmlFor="password">Password:</label><br />
           <input
+            id="password"
             type="password"
             name="password"
             value={formData.password}
@@ -92,8 +95,9 @@ function Register() {
         </div>
 
         <div className="role-selection">
-          <label>Role:</label><br />
+          <label htmlFor="role">Role:</label><br />
           <select
+            id="role"
             name="role"
             value={formData.role}
             onChange={handleChange}
@@ -104,7 +108,7 @@ function Register() {
           </select>
         </div>
 
-        <button type="submit">Register</button>
+        <button type="submit" className="btn">Register</button>
       </form>
     </div>
   );

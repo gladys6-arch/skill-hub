@@ -8,6 +8,7 @@ import AdminRoutes from './Routes/AdminRoutes'
 import TeacherRoutes from './Routes/TeacherRoutes'
 import StudentRoutes from './Routes/StudentRoutes'
 import './App.css'
+import './components/Navbar.css'
 
 function App() {
   return (

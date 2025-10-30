@@ -1,54 +1,61 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+
 function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
-    <nav style={styles.nav}>
-      <div style={styles.logoArea}>
-        <h2 style={{ margin: 0 }}>SkillHub</h2>
-      </div>
+    <nav className="navbar">
+      <div className="navbar-content">
+        <div className="logo">SkillHub</div>
 
-      {user && (
-        <div style={styles.userArea}>
-          <span style={styles.welcome}>
-            Welcome, {user.full_name || user.email}
-          </span>
-          <button onClick={logout} style={styles.button}>Logout</button>
-        </div>
-      )}
+        {user ? (
+          <>
+            <div className="nav-links">
+              {user.role === 'admin' && (
+                <>
+                  <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
+                  <Link to="/admin/users" className="nav-link">Manage Users</Link>
+                </>
+              )}
+              {user.role === 'teacher' && (
+                <>
+                  <Link to="/teacher/dashboard" className="nav-link">Dashboard</Link>
+                  <Link to="/teacher/courses" className="nav-link">My Courses</Link>
+                </>
+              )}
+              {user.role === 'student' && (
+                <>
+                  <Link to="/student/dashboard" className="nav-link">Dashboard</Link>
+                  <Link to="/student/courses" className="nav-link">Available Courses</Link>
+                </>
+              )}
+              <span className="nav-link">Welcome, {user.full_name || user.email}</span>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </div>
+          </>
+        ) : (
+          <div className="nav-links">
+            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/register" className="nav-link">Register</Link>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
-
-const styles = {
-  nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px 20px",
-    borderBottom: "1px solid #ccc",
-  },
-  logoArea: {
-    display: "flex",
-    alignItems: "center",
-  },
-  userArea: {
-    display: "flex",
-    alignItems: "center",
-    gap: "15px",
-  },
-  welcome: {
-    color: "#333",
-    fontWeight: "bold",
-  },
-  button: {
-    background: "none",
-    border: "1px solid #333",
-    borderRadius: "4px",
-    padding: "5px 10px",
-    cursor: "pointer",
-  },
-};
 
 export default Navbar;

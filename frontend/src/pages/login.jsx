@@ -48,8 +48,9 @@ function Login({ onLogin }) {
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Email:</label><br />
+          <label htmlFor="email">Email:</label><br />
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -58,8 +59,9 @@ function Login({ onLogin }) {
         </div>
 
         <div>
-          <label>Password:</label><br />
+          <label htmlFor="password">Password:</label><br />
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -67,7 +69,7 @@ function Login({ onLogin }) {
           />
         </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" className="btn">Login</button>
       </form>
     </div>
   );
