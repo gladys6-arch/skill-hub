@@ -42,14 +42,16 @@ function Login() {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <p className="form-description">Welcome back! Please sign in to your account.</p>
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Email:</label><br />
+          <label htmlFor="email">Email:</label><br />
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -58,8 +60,9 @@ function Login() {
         </div>
 
         <div>
-          <label>Password:</label><br />
+          <label htmlFor="password">Password:</label><br />
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -67,7 +70,7 @@ function Login() {
           />
         </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" className="btn">Login</button>
       </form>
     </div>
   );
