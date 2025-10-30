@@ -5,6 +5,7 @@ import AvailableCourses from '../pages/AvailableCourses';
 import Progress from '../pages/Progress';
 import Certificate from '../pages/Certificate';
 import StudentCourseReviews from '../pages/StudentCourseReviews';
+import CourseDetails from '../pages/CourseDetails';
 
 export default function StudentRoutes() {
   return (
