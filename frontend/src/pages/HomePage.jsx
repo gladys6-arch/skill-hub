@@ -6,7 +6,9 @@ function HomePage() {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1>Welcome to Skill Hub</h1>
-        <p>A platform for connecting learners and teachers to share skills and knowledge.</p>
+        <p>
+          A platform for connecting learners and teachers to share skills and knowledge.
+        </p>
       </header>
 
       <main style={styles.main}>
@@ -16,9 +18,11 @@ function HomePage() {
             Join Skill Hub today — register as a teacher or a student, log in, and start
             sharing or learning new skills.
           </p>
+
           <div style={styles.buttonGroup}>
             <Link to="/login" style={styles.button}>Login</Link>
             <Link to="/register" style={styles.button}>Register</Link>
+            <Link to="/admin-login" style={styles.adminButton}>Admin Login</Link>
           </div>
         </section>
       </main>
@@ -65,6 +69,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     gap: "10px",
+    flexWrap: "wrap",
   },
   button: {
     textDecoration: "none",
@@ -73,6 +78,16 @@ const styles = {
     padding: "10px 20px",
     borderRadius: "4px",
     fontWeight: "bold",
+    transition: "background-color 0.3s ease",
+  },
+  adminButton: {
+    textDecoration: "none",
+    color: "white",
+    backgroundColor: "#d9534f", // red tone for admin
+    padding: "10px 20px",
+    borderRadius: "4px",
+    fontWeight: "bold",
+    transition: "background-color 0.3s ease",
   },
   footer: {
     textAlign: "center",
