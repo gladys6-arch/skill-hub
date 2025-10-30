@@ -1,50 +1,41 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Payment
 from extensions import db
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models.payment import Payment
+from models.course import Course
 from utils.decorators import role_required
 
-payment_bp = Blueprint('payment', __name__)
+payment_bp = Blueprint('payment_bp', __name__)
 
-@payment_bp.route('/', methods=['GET'])
-def payment_info():
-    return jsonify({
-        'message': 'SkillHub Payment API',
-        'endpoints': {
-            'process': 'POST /api/payment/process',
-            'history': 'GET /api/payment/history'
-        },
-        'status': 'active'
-    })
-
-@payment_bp.route('/process', methods=['POST'])
+@payment_bp.route('/payment/pay', methods=['POST'])
 @jwt_required()
 @role_required('student')
-def process_payment():
+def make_payment():
     data = request.get_json()
-    student_id = get_jwt_identity()
-    
+    user = get_jwt_identity()
+    course_id = data.get('course_id')
+    course = Course.query.get(course_id)
+
+    if not course:
+        return jsonify({"msg": "Course not found"}), 404
+
+    admin_cut = round(course.price * 0.30, 2)
+    teacher_cut = round(course.price * 0.70, 2)
+
     payment = Payment(
-        student_id=student_id,
-        course_id=data['course_id'],
-        amount=data['amount'],
-        teacher_share=data['amount'] * 0.8,
-        admin_share=data['amount'] * 0.2
+        student_id=user['id'],
+        course_id=course_id,
+        amount=course.price,
+        teacher_share=teacher_cut,
+        admin_share=admin_cut,
+        status='paid'
     )
-    
     db.session.add(payment)
     db.session.commit()
-    
-    return jsonify({'message': 'Payment processed'}), 201
 
-@payment_bp.route('/history', methods=['GET'])
-@jwt_required()
-def payment_history():
-    student_id = get_jwt_identity()
-    payments = Payment.query.filter_by(student_id=student_id).all()
-    
-    return jsonify([{
-        'id': p.id,
-        'amount': p.amount,
-        'status': p.status
-    } for p in payments])
+    return jsonify({
+        "msg": "Payment successful",
+        "amount": course.price,
+        "admin_share": admin_cut,
+        "teacher_share": teacher_cut
+    }), 201
