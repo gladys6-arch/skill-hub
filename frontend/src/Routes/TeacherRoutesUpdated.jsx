@@ -7,6 +7,7 @@ import TeacherCourses from '../pages/TeacherCourses';
 import TeacherSkills from '../pages/TeacherSkills';
 import TeacherRequests from '../pages/TeacherRequests';
 import TeacherBalance from '../pages/TeacherBalance';
+import StudentProgress from '../pages/StudentProgress';
 import Modules from '../pages/Modules';
 
 export default function TeacherRoutes() {
@@ -19,6 +20,7 @@ export default function TeacherRoutes() {
       <Route path="/skills" element={<TeacherSkills />} />
       <Route path="/requests" element={<TeacherRequests />} />
       <Route path="/balance" element={<TeacherBalance />} />
+      <Route path="/students-progress" element={<StudentProgress />} />
       <Route path="/modules" element={<Modules />} />
     </Routes>
   );

@@ -54,4 +54,17 @@ class Enrollment(db.Model):
     course = db.relationship('Course', back_populates='enrollments')
 
 
+class SkillEnrollment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    skill_id = db.Column(db.Integer, db.ForeignKey('skill.id'))
+    date_enrolled = db.Column(db.DateTime, default=db.func.now())
+    progress = db.Column(db.Integer, default=0)
+    completed = db.Column(db.Boolean, default=False)
+
+    #relationships
+    student = db.relationship('User', foreign_keys=[student_id])
+    skill = db.relationship('Skill', foreign_keys=[skill_id])
+
+
 

@@ -9,13 +9,20 @@ def seed_data():
         db.drop_all()
         db.create_all()
         
-        # Create Admin
-        admin = User(
-            full_name="Admin User",
-            email="admin@skillhub.com",
+        # Create Admins
+        admin1 = User(
+            full_name="John Admin",
+            email="jobk@gmail.com",
             role="admin"
         )
-        admin.set_password("admin123")
+        admin1.set_password("admin123")
+        
+        admin2 = User(
+            full_name="Beverly Admin",
+            email="beverly@gmail.com",
+            role="admin"
+        )
+        admin2.set_password("admin254")
         
         # Create Teachers
         teacher1 = User(
@@ -48,7 +55,7 @@ def seed_data():
         student2.set_password("bob123")
         
         # Add users to database
-        db.session.add_all([admin, teacher1, teacher2, student1, student2])
+        db.session.add_all([admin1, admin2, teacher1, teacher2, student1, student2])
         db.session.commit()
         
         # Create Skills
@@ -107,7 +114,8 @@ def seed_data():
         db.session.commit()
         print("✅ Database seeded successfully!")
         print("\n📋 Test Accounts:")
-        print("Admin: admin@skillhub.com / admin123")
+        print("Admin 1: jobk@gmail.com / admin123")
+        print("Admin 2: beverly@gmail.com / admin254")
         print("Teacher: teacher@skillhub.com / teacher123")
         print("Student: student@skillhub.com / student123")
 

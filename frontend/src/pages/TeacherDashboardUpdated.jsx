@@ -79,23 +79,33 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="row mt-3">
-        <div className="col-md-6">
+        <div className="col-md-4">
           <div className="card">
             <div className="card-header">
               <h5>Student Interactions</h5>
             </div>
             <div className="card-body">
-              <Link to="/teacher/requests" className="btn btn-info">View Student Requests</Link>
+              <Link to="/teacher/requests" className="btn btn-info btn-sm">View Student Requests</Link>
             </div>
           </div>
         </div>
-        <div className="col-md-6">
+        <div className="col-md-4">
+          <div className="card">
+            <div className="card-header">
+              <h5>Student Progress</h5>
+            </div>
+            <div className="card-body">
+              <Link to="/teacher/students-progress" className="btn btn-warning btn-sm">View Student Progress</Link>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4">
           <div className="card">
             <div className="card-header">
               <h5>Earnings</h5>
             </div>
             <div className="card-body">
-              <Link to="/teacher/balance" className="btn btn-success">View My Earnings</Link>
+              <Link to="/teacher/balance" className="btn btn-success btn-sm">View My Earnings</Link>
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ function HomePage() {
       <div className="button-group">
         <Link to="/login" className="btn">Login</Link>
         <Link to="/register" className="btn">Register</Link>
+        <Link to="/admin-login" className="btn admin-btn">Admin Login</Link>
       </div>
     </div>
   );

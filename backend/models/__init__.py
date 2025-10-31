@@ -4,3 +4,4 @@ from .payment import Payment
 from .certificate import Certificate
 from .reviews import Review
 from .ratings import Rating
+from .teacher_request import TeacherRequest

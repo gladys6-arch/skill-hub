@@ -1,15 +1,16 @@
 from flask import Flask
 from flask_cors import CORS
-from extensions import db, jwt
+from extensions import db, jwt, migrate
 from config import Config
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, origins=["http://localhost:5173"])
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'])
     db.init_app(app)
     jwt.init_app(app)
+    migrate.init_app(app, db)
 
     from routes.auth_routes import auth_bp
     from routes.admin_routes import admin_bp
