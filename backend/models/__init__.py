@@ -5,3 +5,4 @@ from .certificate import Certificate
 from .reviews import Review
 from .ratings import Rating
 from .teacher_request import TeacherRequest
+from .chat import StudySession, ChatMessage

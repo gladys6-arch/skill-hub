@@ -15,4 +15,3 @@ class Payment(db.Model):
    student = db.relationship('User', back_populates='payments')
    course = db.relationship('Course', back_populates='payments')
    skill = db.relationship('Skill', foreign_keys=[skill_id])
-

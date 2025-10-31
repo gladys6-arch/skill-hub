@@ -4,7 +4,7 @@ from models.user import User
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 
-auth_bp = Blueprint('auth_bp', __name__, url_prefix="/auth")
+auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

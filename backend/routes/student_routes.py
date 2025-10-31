@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.decorators import role_required
-from models.course import Course, Enrollment, SkillEnrollment, Skill
+from models.course import Course, Enrollment, SkillEnrollment, Skill, Module
 from models import User
 
 student_bp = Blueprint('student_bp', __name__)
@@ -264,6 +264,10 @@ def add_rating():
 @role_required('student')
 def get_certificate(course_id):
     from models.certificate import Certificate
+    from utils.certificate_generator import save_certificate
+    from flask import send_file
+    import os
+    
     identity = get_jwt_identity()
     user_id = identity if isinstance(identity, int) else identity.get('id')
     
@@ -271,21 +275,71 @@ def get_certificate(course_id):
     if not enrollment or not enrollment.completed:
         return jsonify({"msg": "Course not completed"}), 400
     
+    course = Course.query.get(course_id)
+    user = User.query.get(user_id)
+    
     cert = Certificate.query.filter_by(student_id=user_id, course_id=course_id).first()
     if not cert:
+        file_path = f"certificates/cert_{user_id}_{course_id}.pdf"
         cert = Certificate(
             student_id=user_id,
             course_id=course_id,
-            file_path=f"certificates/cert_{user_id}_{course_id}.pdf"
+            file_path=file_path
         )
         db.session.add(cert)
         db.session.commit()
+        
+        # Generate the actual certificate file
+        full_path = os.path.join(os.getcwd(), file_path)
+        save_certificate(user.full_name, course.title, full_path, "course")
     
-    return jsonify({
-        "certificate_id": cert.id,
-        "file_path": cert.file_path,
-        "msg": "Certificate generated"
-    })
+    # Return file for download
+    full_path = os.path.join(os.getcwd(), cert.file_path)
+    if not os.path.exists(full_path):
+        save_certificate(user.full_name, course.title, full_path, "course")
+    
+    return send_file(full_path, as_attachment=True, download_name=f"{course.title}_certificate.pdf")
+
+@student_bp.route('/skill-certificate/<int:skill_id>', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_skill_certificate(skill_id):
+    from models.certificate import Certificate
+    from utils.certificate_generator import save_certificate
+    from flask import send_file
+    import os
+    
+    identity = get_jwt_identity()
+    user_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    enrollment = SkillEnrollment.query.filter_by(student_id=user_id, skill_id=skill_id).first()
+    if not enrollment or not enrollment.completed:
+        return jsonify({"msg": "Skill not completed"}), 400
+    
+    skill = Skill.query.get(skill_id)
+    user = User.query.get(user_id)
+    
+    cert = Certificate.query.filter_by(student_id=user_id, skill_id=skill_id).first()
+    if not cert:
+        file_path = f"certificates/skill_cert_{user_id}_{skill_id}.pdf"
+        cert = Certificate(
+            student_id=user_id,
+            skill_id=skill_id,
+            file_path=file_path
+        )
+        db.session.add(cert)
+        db.session.commit()
+        
+        # Generate the actual certificate file
+        full_path = os.path.join(os.getcwd(), file_path)
+        save_certificate(user.full_name, skill.name, full_path, "skill")
+    
+    # Return file for download
+    full_path = os.path.join(os.getcwd(), cert.file_path)
+    if not os.path.exists(full_path):
+        save_certificate(user.full_name, skill.name, full_path, "skill")
+    
+    return send_file(full_path, as_attachment=True, download_name=f"{skill.name}_certificate.pdf")
 
 @student_bp.route('/request-teacher', methods=['POST'])
 @jwt_required()
@@ -338,3 +392,79 @@ def start_skill(skill_id):
         db.session.commit()
     
     return jsonify({"msg": "Skill started", "progress": enrollment.progress})
+
+@student_bp.route('/enrolled-course/<int:course_id>', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_enrolled_course_content(course_id):
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+    if not enrollment:
+        return jsonify({'message': 'Not enrolled'}), 403
+    
+    course = Course.query.get_or_404(course_id)
+    modules = Module.query.filter_by(course_id=course_id).all()
+    
+    return jsonify({
+        'course': {
+            'id': course.id,
+            'title': course.title,
+            'description': course.description,
+            'teacher_name': course.teacher.full_name
+        },
+        'modules': [{
+            'id': m.id,
+            'title': m.title,
+            'content': m.content
+        } for m in modules],
+        'progress': enrollment.progress,
+        'completed': enrollment.completed
+    })
+
+@student_bp.route('/sessions', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_student_sessions():
+    from models.chat import StudySession
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    sessions = StudySession.query.filter_by(student_id=student_id).all()
+    return jsonify([{
+        'id': s.id,
+        'teacher_name': s.teacher.full_name,
+        'subject': s.subject,
+        'status': s.status,
+        'created_at': s.created_at.strftime('%Y-%m-%d %H:%M')
+    } for s in sessions])
+
+@student_bp.route('/chat/<int:session_id>', methods=['GET'])
+@jwt_required()
+def get_student_chat_messages(session_id):
+    from models.chat import ChatMessage
+    messages = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
+    return jsonify([{
+        'id': m.id,
+        'sender_name': m.sender.full_name,
+        'message': m.message,
+        'timestamp': m.timestamp.strftime('%H:%M')
+    } for m in messages])
+
+@student_bp.route('/chat/<int:session_id>/send', methods=['POST'])
+@jwt_required()
+def send_student_message(session_id):
+    from models.chat import ChatMessage
+    identity = get_jwt_identity()
+    sender_id = identity if isinstance(identity, int) else identity.get('id')
+    data = request.get_json()
+    
+    message = ChatMessage(
+        session_id=session_id,
+        sender_id=sender_id,
+        message=data['message']
+    )
+    db.session.add(message)
+    db.session.commit()
+    return jsonify({'message': 'Message sent'})

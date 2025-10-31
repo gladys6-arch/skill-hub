@@ -28,6 +28,7 @@ class Skill(db.Model):
 
     students = db.relationship('User', secondary=student_skill, back_populates='skills')
     teacher = db.relationship('User', foreign_keys=[teacher_id])
+    certificates = db.relationship('Certificate', back_populates='skill', cascade="all, delete-orphan")
 
 
 

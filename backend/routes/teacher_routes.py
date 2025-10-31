@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import User, Course, Module, Skill
+from models.course import Enrollment, SkillEnrollment
 from extensions import db
 from utils.decorators import role_required
 
@@ -139,6 +140,24 @@ def get_course_modules(course_id):
         'content': m.content
     } for m in modules])
 
+@teacher_bp.route('/modules/<int:module_id>', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_module(module_id):
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    module = Module.query.get_or_404(module_id)
+    if module.course.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    return jsonify({
+        'id': module.id,
+        'title': module.title,
+        'content': module.content,
+        'course_id': module.course_id
+    })
+
 @teacher_bp.route('/modules/<int:module_id>', methods=['PUT'])
 @jwt_required()
 @role_required('teacher')
@@ -155,6 +174,24 @@ def update_module(module_id):
     module.content = data.get('content', module.content)
     db.session.commit()
     return jsonify({'message': 'Module updated successfully'})
+
+@teacher_bp.route('/courses/<int:course_id>', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_course(course_id):
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return jsonify({'message': 'Course not found or unauthorized'}), 404
+    
+    return jsonify({
+        'id': course.id,
+        'title': course.title,
+        'description': course.description,
+        'price': course.price
+    })
 
 @teacher_bp.route('/courses/<int:course_id>', methods=['PUT'])
 @jwt_required()
@@ -174,6 +211,24 @@ def update_course(course_id):
     db.session.commit()
     return jsonify({'message': 'Course updated successfully'})
 
+@teacher_bp.route('/skills/<int:skill_id>', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_skill(skill_id):
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    skill = Skill.query.filter_by(id=skill_id, teacher_id=teacher_id).first()
+    if not skill:
+        return jsonify({'message': 'Skill not found or unauthorized'}), 404
+    
+    return jsonify({
+        'id': skill.id,
+        'name': skill.name,
+        'description': skill.description,
+        'price': skill.price
+    })
+
 @teacher_bp.route('/skills/<int:skill_id>', methods=['PUT'])
 @jwt_required()
 @role_required('teacher')
@@ -191,3 +246,108 @@ def update_skill(skill_id):
     skill.price = data.get('price', skill.price)
     db.session.commit()
     return jsonify({'message': 'Skill updated successfully'})
+
+@teacher_bp.route('/requests/<int:request_id>/accept', methods=['POST'])
+@jwt_required()
+@role_required('teacher')
+def accept_request_and_create_session(request_id):
+    from models.teacher_request import TeacherRequest
+    from models.chat import StudySession
+    
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    request_obj = TeacherRequest.query.get_or_404(request_id)
+    if request_obj.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    request_obj.status = 'accepted'
+    
+    session = StudySession(
+        student_id=request_obj.student_id,
+        teacher_id=request_obj.teacher_id,
+        subject=request_obj.message[:100]
+    )
+    db.session.add(session)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Request accepted and study session created',
+        'session_id': session.id
+    })
+
+@teacher_bp.route('/student/<int:student_id>/progress', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def view_student_progress(student_id):
+    from models.course import Enrollment, SkillEnrollment
+    
+    enrollments = Enrollment.query.filter_by(student_id=student_id).all()
+    skill_enrollments = SkillEnrollment.query.filter_by(student_id=student_id).all()
+    
+    progress_data = []
+    
+    for enrollment in enrollments:
+        progress_data.append({
+            'type': 'course',
+            'title': enrollment.course.title,
+            'progress': enrollment.progress,
+            'completed': enrollment.completed
+        })
+    
+    for enrollment in skill_enrollments:
+        progress_data.append({
+            'type': 'skill',
+            'title': enrollment.skill.name,
+            'progress': enrollment.progress,
+            'completed': enrollment.completed
+        })
+    
+    return jsonify(progress_data)
+
+@teacher_bp.route('/sessions', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_study_sessions():
+    from models.chat import StudySession
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    sessions = StudySession.query.filter_by(teacher_id=teacher_id).all()
+    return jsonify([{
+        'id': s.id,
+        'student_id': s.student_id,
+        'student_name': s.student.full_name,
+        'subject': s.subject,
+        'status': s.status,
+        'created_at': s.created_at.strftime('%Y-%m-%d %H:%M')
+    } for s in sessions])
+
+@teacher_bp.route('/chat/<int:session_id>', methods=['GET'])
+@jwt_required()
+def get_chat_messages(session_id):
+    from models.chat import ChatMessage
+    messages = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
+    return jsonify([{
+        'id': m.id,
+        'sender_name': m.sender.full_name,
+        'message': m.message,
+        'timestamp': m.timestamp.strftime('%H:%M')
+    } for m in messages])
+
+@teacher_bp.route('/chat/<int:session_id>/send', methods=['POST'])
+@jwt_required()
+def send_message(session_id):
+    from models.chat import ChatMessage
+    identity = get_jwt_identity()
+    sender_id = identity if isinstance(identity, int) else identity.get('id')
+    data = request.get_json()
+    
+    message = ChatMessage(
+        session_id=session_id,
+        sender_id=sender_id,
+        message=data['message']
+    )
+    db.session.add(message)
+    db.session.commit()
+    return jsonify({'message': 'Message sent'})
