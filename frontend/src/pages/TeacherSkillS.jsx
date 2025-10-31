@@ -8,16 +8,19 @@ export default function TeacherSkills() {
   const [editingSkill, setEditingSkill] = useState(null);
 
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const res = await getMySkills();
-        setSkills(res.data);
-      } catch (error) {
-        console.error('Error fetching skills:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchSkills();
+  }, []);
+
+  const fetchSkills = async () => {
+    try {
+      const res = await getMySkills();
+      setSkills(res.data);
+    } catch (error) {
+      console.error('Error fetching skills:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpdateSkill = async (e) => {
     e.preventDefault();
@@ -30,8 +33,6 @@ export default function TeacherSkills() {
       alert('Error updating skill');
     }
   };
-    fetchSkills();
-  }, []);
 
   if (loading) return <div>Loading...</div>;
 
@@ -98,7 +99,7 @@ export default function TeacherSkills() {
                     </>
                   )}
                 </tr>
-              ))
+              ))}
             </tbody>
           </table>
         </div>

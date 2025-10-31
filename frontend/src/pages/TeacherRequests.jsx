@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getTeacherRequests, updateRequestStatus } from '../services/teacherService';
 
 export default function TeacherRequests() {
   const [requests, setRequests] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -24,6 +26,25 @@ export default function TeacherRequests() {
       ));
     } catch (error) {
       console.error('Error updating status:', error);
+    }
+  };
+
+  const acceptAndCreateSession = async (requestId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/teacher/requests/${requestId}/accept`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        navigate(`/teacher/chat/${data.session_id}`);
+      } else {
+        alert('Error creating session');
+      }
+    } catch (error) {
+      alert('Error creating session');
     }
   };
 
@@ -58,9 +79,9 @@ export default function TeacherRequests() {
                       <>
                         <button 
                           className="btn btn-success btn-sm me-2"
-                          onClick={() => handleStatusUpdate(request.id, 'accepted')}
+                          onClick={() => acceptAndCreateSession(request.id)}
                         >
-                          Accept
+                          Accept & Start Session
                         </button>
                         <button 
                           className="btn btn-danger btn-sm"

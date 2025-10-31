@@ -37,3 +37,27 @@ export const updateRequestStatus = (requestId, status) => {
   return axios.put(`${API_BASE_URL}/api/teacher/requests/${requestId}`, { status }, getAuthHeaders());
 };
 
+export const getCourse = (courseId) => {
+  return axios.get(`${API_BASE_URL}/api/teacher/courses/${courseId}`, getAuthHeaders());
+};
+
+export const updateCourse = (courseId, data) => {
+  return axios.put(`${API_BASE_URL}/api/teacher/courses/${courseId}`, data, getAuthHeaders());
+};
+
+export const getModule = (moduleId) => {
+  return axios.get(`${API_BASE_URL}/api/teacher/modules/${moduleId}`, getAuthHeaders());
+};
+
+export const updateModule = (moduleId, data) => {
+  return axios.put(`${API_BASE_URL}/api/teacher/modules/${moduleId}`, data, getAuthHeaders());
+};
+
+export const getSkill = (skillId) => {
+  return axios.get(`${API_BASE_URL}/api/teacher/skills/${skillId}`, getAuthHeaders());
+};
+
+export const updateSkill = (skillId, data) => {
+  return axios.put(`${API_BASE_URL}/api/teacher/skills/${skillId}`, data, getAuthHeaders());
+};
+

@@ -6,6 +6,7 @@ import Progress from '../pages/Progress';
 import Certificate from '../pages/Certificate';
 import StudentCourseReviews from '../pages/StudentCourseReviews';
 import CourseDetails from '../pages/CourseDetails';
+import CourseContent from '../pages/CourseContent';
 
 export default function StudentRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function StudentRoutes() {
       <Route path="/progress" element={<Progress />} />
       <Route path="/certificate" element={<Certificate />} />
       <Route path="/reviews" element={<StudentCourseReviews />} />
+      <Route path="/course/:courseId/content" element={<CourseContent />} />
     </Routes>
   );
 }
