@@ -5,6 +5,7 @@ import ManageUsers from '../pages/ManageUsers';
 import RegisterTeacher from '../pages/RegisterTeacher';
 import TeacherDetails from '../pages/TeacherDetails';
 import StudentDetails from '../pages/StudentDetails';
+import AdminRevenue from '../pages/AdminRevenue';
 
 export default function AdminRoutes() {
   return (
@@ -14,6 +15,7 @@ export default function AdminRoutes() {
       <Route path="/register-teacher" element={<RegisterTeacher />} />
       <Route path="/teachers/:id/details" element={<TeacherDetails />} />
       <Route path="/students/:id/details" element={<StudentDetails />} />
+      <Route path="/revenue" element={<AdminRevenue />} />
     </Routes>
   );
 }

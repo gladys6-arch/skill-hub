@@ -7,6 +7,7 @@ function AdminLogin() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -35,14 +36,16 @@ function AdminLogin() {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Admin Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <p className="form-description">Access the admin panel with your credentials.</p>
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Email:</label><br />
+          <label htmlFor="email">Email:</label><br />
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -51,16 +54,38 @@ function AdminLogin() {
         </div>
 
         <div>
-          <label>Password:</label><br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <label htmlFor="password">Password:</label><br />
+          <div style={{ position: 'relative' }}>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: '14px',
+                textDecoration: 'underline'
+              }}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
         </div>
 
-        <button type="submit">Admin Login</button>
+        <button type="submit" className="btn">Admin Login</button>
       </form>
     </div>
   );

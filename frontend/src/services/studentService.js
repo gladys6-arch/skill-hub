@@ -28,3 +28,55 @@ export const getCourseDetails = (id) => axios.get(`${API_BASE_URL}/api/student/c
 export const getEnrolledCourseContent = (courseId) => {
   return axios.get(`${API_BASE_URL}/api/student/enrolled-course/${courseId}`, getAuthHeaders());
 };
+
+export const markModuleCompleted = (moduleId, completed) => {
+  return axios.post(`${API_BASE_URL}/api/student/modules/${moduleId}/progress`, { completed }, getAuthHeaders());
+};
+
+// Time tracking functions
+export const startTimeTracking = (moduleId) => {
+  return axios.post(`${API_BASE_URL}/api/student/modules/${moduleId}/time/start`, {}, getAuthHeaders());
+};
+
+export const updateTimeTracking = (moduleId, additionalSeconds) => {
+  return axios.post(`${API_BASE_URL}/api/student/modules/${moduleId}/time/update`, { additional_seconds: additionalSeconds }, getAuthHeaders());
+};
+
+export const getTimeTracking = (moduleId) => {
+  return axios.get(`${API_BASE_URL}/api/student/modules/${moduleId}/time`, getAuthHeaders());
+};
+
+// Reading progress functions
+export const getReadingSections = (moduleId) => {
+  return axios.get(`${API_BASE_URL}/api/student/modules/${moduleId}/reading-sections`, getAuthHeaders());
+};
+
+export const markReadingSectionComplete = (sectionId) => {
+  return axios.post(`${API_BASE_URL}/api/student/reading-sections/${sectionId}/complete`, {}, getAuthHeaders());
+};
+
+// Quiz functions
+export const getModuleQuiz = (moduleId) => {
+  return axios.get(`${API_BASE_URL}/api/student/modules/${moduleId}/quiz`, getAuthHeaders());
+};
+
+export const startQuizAttempt = (quizId) => {
+  return axios.post(`${API_BASE_URL}/api/student/quizzes/${quizId}/start`, {}, getAuthHeaders());
+};
+
+export const submitQuizAttempt = (attemptId, responses) => {
+  return axios.post(`${API_BASE_URL}/api/student/quiz-attempts/${attemptId}/submit`, { responses }, getAuthHeaders());
+};
+
+export const getQuizResults = (attemptId) => {
+  return axios.get(`${API_BASE_URL}/api/student/quiz-attempts/${attemptId}/results`, getAuthHeaders());
+};
+
+// Interactive Elements functions
+export const getInteractiveElements = (moduleId) => {
+  return axios.get(`${API_BASE_URL}/api/student/modules/${moduleId}/interactive-elements`, getAuthHeaders());
+};
+
+export const markInteractiveElementComplete = (elementId) => {
+  return axios.post(`${API_BASE_URL}/api/student/interactive-elements/${elementId}/complete`, {}, getAuthHeaders());
+};

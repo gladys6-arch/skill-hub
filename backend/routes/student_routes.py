@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.decorators import role_required
-from models.course import Course, Enrollment, SkillEnrollment, Skill, Module
+from models.course import Course, Enrollment, SkillEnrollment, Skill, Module, ModuleProgress
 from models import User
 
 student_bp = Blueprint('student_bp', __name__)
@@ -39,33 +39,23 @@ def view_progress(course_id):
     if not enrollment:
         return jsonify({"msg": "Not enrolled"}), 404
 
+    # Calculate progress based on ModuleProgress instead of stored progress
+    total_modules = Module.query.filter_by(course_id=course_id).count()
+    completed_modules = ModuleProgress.query.filter_by(
+        student_id=user_id,
+        completed=True
+    ).join(Module).filter(Module.course_id == course_id).count()
+
+    progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
+    completed = progress_percentage >= 100
+
     return jsonify({
         "course_id": course_id,
-        "progress": enrollment.progress,
-        "completed": enrollment.completed
+        "progress": progress_percentage,
+        "completed": completed
     })
 
 
-@student_bp.route('/update-progress', methods=['PUT'])
-@jwt_required()
-@role_required('student')
-def update_progress():
-    identity = get_jwt_identity()
-    user_id = identity if isinstance(identity, int) else identity.get('id')
-    data = request.get_json()
-    course_id = data.get('course_id')
-    progress = data.get('progress', 0)
-
-    enrollment = Enrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
-    if not enrollment:
-        return jsonify({"msg": "Not enrolled"}), 404
-
-    enrollment.progress = progress
-    if progress >= 100:
-        enrollment.completed = True
-
-    db.session.commit()
-    return jsonify({"msg": "Progress updated"})
 
 
 @student_bp.route('/profile', methods=['GET'])
@@ -126,27 +116,37 @@ def get_course_details(course_id):
 def get_my_progress():
     identity = get_jwt_identity()
     user_id = identity if isinstance(identity, int) else identity.get('id')
-    
+
     progress_list = []
-    
+
     # Get course enrollments
     course_enrollments = Enrollment.query.filter_by(student_id=user_id).all()
     for enrollment in course_enrollments:
+        # Calculate progress based on ModuleProgress
+        total_modules = Module.query.filter_by(course_id=enrollment.course_id).count()
+        completed_modules = ModuleProgress.query.filter_by(
+            student_id=user_id,
+            completed=True
+        ).join(Module).filter(Module.course_id == enrollment.course_id).count()
+
+        progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
+        completed = progress_percentage >= 100
+
         status = "Start"
-        if enrollment.completed:
+        if completed:
             status = "Completed - Certificate Available"
-        elif enrollment.progress > 0:
+        elif progress_percentage > 0:
             status = "Continue Learning"
-            
+
         progress_list.append({
             'id': enrollment.course.id,
             'title': enrollment.course.title,
             'type': 'course',
-            'progress': enrollment.progress,
+            'progress': progress_percentage,
             'status': status,
-            'completed': enrollment.completed
+            'completed': completed
         })
-    
+
     # Get skill enrollments
     skill_enrollments = SkillEnrollment.query.filter_by(student_id=user_id).all()
     for enrollment in skill_enrollments:
@@ -155,7 +155,7 @@ def get_my_progress():
             status = "Completed - Certificate Available"
         elif enrollment.progress > 0:
             status = "Continue Learning"
-            
+
         progress_list.append({
             'id': f"skill_{enrollment.skill.id}",
             'title': enrollment.skill.name,
@@ -164,36 +164,10 @@ def get_my_progress():
             'status': status,
             'completed': enrollment.completed
         })
-    
+
     return jsonify(progress_list)
 
 
-@student_bp.route('/update-my-progress', methods=['PUT'])
-@jwt_required()
-@role_required('student')
-def update_my_progress():
-    identity = get_jwt_identity()
-    user_id = identity if isinstance(identity, int) else identity.get('id')
-    data = request.get_json()
-    
-    item_id = data.get('id')
-    progress = data.get('progress', 0)
-    
-    if str(item_id).startswith('skill_'):
-        skill_id = int(item_id.replace('skill_', ''))
-        enrollment = SkillEnrollment.query.filter_by(student_id=user_id, skill_id=skill_id).first()
-    else:
-        enrollment = Enrollment.query.filter_by(student_id=user_id, course_id=item_id).first()
-    
-    if not enrollment:
-        return jsonify({"msg": "Enrollment not found"}), 404
-    
-    enrollment.progress = progress
-    if progress >= 100:
-        enrollment.completed = True
-    
-    db.session.commit()
-    return jsonify({"msg": "Progress updated successfully"})
 
 
 @student_bp.route('/enroll-skill', methods=['POST'])
@@ -399,14 +373,29 @@ def start_skill(skill_id):
 def get_enrolled_course_content(course_id):
     identity = get_jwt_identity()
     student_id = identity if isinstance(identity, int) else identity.get('id')
-    
+
     enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
     if not enrollment:
         return jsonify({'message': 'Not enrolled'}), 403
-    
+
     course = Course.query.get_or_404(course_id)
     modules = Module.query.filter_by(course_id=course_id).all()
-    
+
+    # Get module progress
+    module_progress = {}
+    for mp in ModuleProgress.query.filter_by(student_id=student_id).filter(
+        ModuleProgress.module_id.in_([m.id for m in modules])
+    ).all():
+        module_progress[mp.module_id] = {
+            'completed': mp.completed,
+            'completed_at': mp.completed_at.isoformat() if mp.completed_at else None
+        }
+
+    # Calculate overall progress
+    total_modules = len(modules)
+    completed_modules = sum(1 for mp in module_progress.values() if mp['completed'])
+    progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
+
     return jsonify({
         'course': {
             'id': course.id,
@@ -417,10 +406,12 @@ def get_enrolled_course_content(course_id):
         'modules': [{
             'id': m.id,
             'title': m.title,
-            'content': m.content
+            'content': m.content,
+            'completed': module_progress.get(m.id, {}).get('completed', False),
+            'completed_at': module_progress.get(m.id, {}).get('completed_at')
         } for m in modules],
-        'progress': enrollment.progress,
-        'completed': enrollment.completed
+        'progress': progress_percentage,
+        'completed': progress_percentage >= 100
     })
 
 @student_bp.route('/sessions', methods=['GET'])
@@ -468,3 +459,35 @@ def send_student_message(session_id):
     db.session.add(message)
     db.session.commit()
     return jsonify({'message': 'Message sent'})
+
+@student_bp.route('/teachers', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_teachers():
+    teachers = User.query.filter_by(role='teacher').all()
+    return jsonify([{
+        'id': t.id,
+        'full_name': t.full_name,
+        'email': t.email
+    } for t in teachers])
+
+@student_bp.route('/request-session', methods=['POST'])
+@jwt_required()
+@role_required('student')
+def request_session():
+    from models.teacher_request import TeacherRequest
+    data = request.get_json()
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+
+    # Create teacher request
+    teacher_request = TeacherRequest(
+        student_id=student_id,
+        teacher_id=data['teacher_id'],
+        message=f"Study Session Request: {data['subject']}\n\n{data.get('message', '')}",
+        status='pending'
+    )
+    db.session.add(teacher_request)
+    db.session.commit()
+
+    return jsonify({'message': 'Session request sent successfully'}), 201

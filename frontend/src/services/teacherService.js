@@ -46,10 +46,10 @@ export const addModule = (courseId, moduleData) => {
   });
 };
 
-export const updateModule = (courseId, moduleId, updatedData) => {
+export const updateModule = (moduleId, updatedData) => {
   const token = localStorage.getItem("token");
   return axios.put(
-    `${API_BASE_URL}/api/teacher/courses/${courseId}/modules/${moduleId}`,
+    `${API_BASE_URL}/api/teacher/modules/${moduleId}`,
     updatedData,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -111,6 +111,22 @@ export const updateRequestStatus = (requestId, statusData) => {
 export const getTeacherBalance = () => {
   const token = localStorage.getItem("token");
   return axios.get(`${API_BASE_URL}/api/teacher/balance`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+// -------------------- TEACHER SUBSCRIPTION --------------------
+export const getTeacherSubscription = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/teacher/subscription`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+// -------------------- STUDY SESSIONS --------------------
+export const getStudySessions = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/teacher/sessions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

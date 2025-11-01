@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import User, Course, Module, Skill
+from models import User, Course, Module, Skill, Subscription
 from models.course import Enrollment, SkillEnrollment
 from extensions import db
 from utils.decorators import role_required
+
+# Import additional endpoint files to register their routes
+# Note: These files need to be updated to import teacher_bp from this module
+# For now, the endpoints are already included in this file
 
 teacher_bp = Blueprint('teacher_bp', __name__)
 
@@ -81,11 +85,30 @@ def get_teacher_requests():
 def update_request_status(request_id):
     from models.teacher_request import TeacherRequest
     data = request.get_json()
-    
+
     request_obj = TeacherRequest.query.get_or_404(request_id)
-    request_obj.status = data['status']
+    request_obj.status = data.get('status') or data
     db.session.commit()
     return jsonify({"msg": "Request status updated"})
+
+# Debug endpoint to check all requests
+@teacher_bp.route('/debug/requests', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def debug_requests():
+    from models.teacher_request import TeacherRequest
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    requests = TeacherRequest.query.filter_by(teacher_id=teacher_id).all()
+    return jsonify([{
+        'id': r.id,
+        'student_id': r.student_id,
+        'student_name': r.student.full_name,
+        'message': r.message,
+        'status': r.status,
+        'date_created': r.date_created.strftime('%Y-%m-%d %H:%M:%S')
+    } for r in requests])
 
 @teacher_bp.route('/skills', methods=['GET'])
 @jwt_required()
@@ -253,16 +276,28 @@ def update_skill(skill_id):
 def accept_request_and_create_session(request_id):
     from models.teacher_request import TeacherRequest
     from models.chat import StudySession
-    
+
     identity = get_jwt_identity()
     teacher_id = identity if isinstance(identity, int) else identity.get('id')
-    
+
     request_obj = TeacherRequest.query.get_or_404(request_id)
     if request_obj.teacher_id != teacher_id:
         return jsonify({'message': 'Unauthorized'}), 403
-    
+
+    # Check if session already exists for this request
+    existing_session = StudySession.query.filter_by(
+        student_id=request_obj.student_id,
+        teacher_id=request_obj.teacher_id
+    ).filter(StudySession.subject.contains(request_obj.message[:50])).first()
+
+    if existing_session:
+        return jsonify({
+            'message': 'Session already exists',
+            'session_id': existing_session.id
+        })
+
     request_obj.status = 'accepted'
-    
+
     session = StudySession(
         student_id=request_obj.student_id,
         teacher_id=request_obj.teacher_id,
@@ -270,11 +305,37 @@ def accept_request_and_create_session(request_id):
     )
     db.session.add(session)
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Request accepted and study session created',
         'session_id': session.id
     })
+
+@teacher_bp.route('/requests/<int:request_id>/sessions', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_request_sessions(request_id):
+    from models.teacher_request import TeacherRequest
+    from models.chat import StudySession
+
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    request_obj = TeacherRequest.query.get_or_404(request_id)
+    if request_obj.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+
+    sessions = StudySession.query.filter_by(
+        student_id=request_obj.student_id,
+        teacher_id=request_obj.teacher_id
+    ).filter(StudySession.subject.contains(request_obj.message[:50])).all()
+
+    return jsonify([{
+        'id': s.id,
+        'subject': s.subject,
+        'status': s.status,
+        'created_at': s.created_at.strftime('%Y-%m-%d %H:%M')
+    } for s in sessions])
 
 @teacher_bp.route('/student/<int:student_id>/progress', methods=['GET'])
 @jwt_required()
@@ -342,7 +403,7 @@ def send_message(session_id):
     identity = get_jwt_identity()
     sender_id = identity if isinstance(identity, int) else identity.get('id')
     data = request.get_json()
-    
+
     message = ChatMessage(
         session_id=session_id,
         sender_id=sender_id,
@@ -351,3 +412,150 @@ def send_message(session_id):
     db.session.add(message)
     db.session.commit()
     return jsonify({'message': 'Message sent'})
+
+@teacher_bp.route('/students-progress', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_students_progress():
+    from models.course import Enrollment, SkillEnrollment
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    progress_data = []
+
+    # Get course enrollments
+    course_enrollments = db.session.query(Enrollment, Course, User).join(
+        Course, Enrollment.course_id == Course.id
+    ).join(
+        User, Enrollment.student_id == User.id
+    ).filter(Course.teacher_id == teacher_id).all()
+
+    for enrollment, course, student in course_enrollments:
+        progress_data.append({
+            'student_name': student.full_name,
+            'student_email': student.email,
+            'item_type': 'course',
+            'item_name': course.title,
+            'progress': enrollment.progress,
+            'completed': enrollment.completed,
+            'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+        })
+
+    # Get skill enrollments
+    skill_enrollments = db.session.query(SkillEnrollment, Skill, User).join(
+        Skill, SkillEnrollment.skill_id == Skill.id
+    ).join(
+        User, SkillEnrollment.student_id == User.id
+    ).filter(Skill.teacher_id == teacher_id).all()
+
+    for enrollment, skill, student in skill_enrollments:
+        progress_data.append({
+            'student_name': student.full_name,
+            'student_email': student.email,
+            'item_type': 'skill',
+            'item_name': skill.name,
+            'progress': enrollment.progress,
+            'completed': enrollment.completed,
+            'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+        })
+
+    return jsonify(progress_data)
+
+@teacher_bp.route('/courses/<int:course_id>/students', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_course_students(course_id):
+    from models.course import Enrollment
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return jsonify({'message': 'Course not found or unauthorized'}), 404
+
+    enrollments = db.session.query(Enrollment, User).join(
+        User, Enrollment.student_id == User.id
+    ).filter(Enrollment.course_id == course_id).all()
+
+    students_data = []
+    for enrollment, student in enrollments:
+        students_data.append({
+            'student_id': student.id,
+            'student_name': student.full_name,
+            'student_email': student.email,
+            'progress': enrollment.progress,
+            'completed': enrollment.completed,
+            'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+        })
+
+    return jsonify({
+        'course_title': course.title,
+        'students': students_data
+    })
+
+@teacher_bp.route('/balance', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_teacher_balance():
+    from models.payment import Payment
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    courses = Course.query.filter_by(teacher_id=teacher_id).all()
+    skills = Skill.query.filter_by(teacher_id=teacher_id).all()
+
+    course_ids = [c.id for c in courses]
+    skill_ids = [s.id for s in skills]
+
+    total_earnings = 0
+    payment_history = []
+
+    # Course payments
+    if course_ids:
+        course_payments = Payment.query.filter(Payment.course_id.in_(course_ids)).all()
+        for payment in course_payments:
+            total_earnings += payment.teacher_share
+            payment_history.append({
+                'item_name': payment.course.title,
+                'item_type': 'course',
+                'amount': payment.teacher_share,
+                'student_name': payment.student.full_name
+            })
+
+    # Skill payments
+    if skill_ids:
+        skill_payments = Payment.query.filter(Payment.skill_id.in_(skill_ids)).all()
+        for payment in skill_payments:
+            total_earnings += payment.teacher_share
+            payment_history.append({
+                'item_name': payment.skill.name,
+                'item_type': 'skill',
+                'amount': payment.teacher_share,
+                'student_name': payment.student.full_name
+            })
+
+    return jsonify({
+        'total_balance': total_earnings,
+        'payment_history': payment_history,
+        'total_courses': len(courses),
+        'total_skills': len(skills)
+    })
+
+@teacher_bp.route('/subscription', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_teacher_subscription():
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    subscription = Subscription.query.filter_by(teacher_id=teacher_id).first()
+    if not subscription:
+        return jsonify({'message': 'No subscription found'}), 404
+
+    return jsonify({
+        'id': subscription.id,
+        'plan_type': subscription.plan_type,
+        'status': subscription.status,
+        'renewal_date': subscription.renewal_date.strftime('%Y-%m-%d') if subscription.renewal_date else None,
+        'created_at': subscription.created_at.strftime('%Y-%m-%d') if subscription.created_at else None
+    })

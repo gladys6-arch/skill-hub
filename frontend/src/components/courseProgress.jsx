@@ -1,30 +1,46 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const CourseProgress = ({ studentId, courseId }) => {
+const CourseProgress = ({ studentId, courseId, onProgressUpdate }) => {
   const [progress, setProgress] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [modules, setModules] = useState([]);
 
   const BACKEND_URL = "http://127.0.0.1:5000"; // adjust if using render/vercel/backend URL
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const response = await axios.get(
-          `${BACKEND_URL}/student/progress/${studentId}/${courseId}`
-        );
-        setProgress(response.data.progress);
-        setCompleted(response.data.completed);
-      } catch (error) {
-        console.error("Error fetching progress:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProgress = async () => {
+    try {
+      // Use the new validated course progress endpoint
+      const response = await axios.get(
+        `${BACKEND_URL}/api/student/course-progress/${courseId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setProgress(response.data.overall_progress);
+      setCompleted(response.data.completed);
 
+      // Fetch module details with validation status
+      const modulesResponse = await axios.get(
+        `${BACKEND_URL}/api/student/courses/${courseId}/modules`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setModules(modulesResponse.data.modules);
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProgress();
   }, [studentId, courseId]);
+
+  useEffect(() => {
+    if (onProgressUpdate) {
+      fetchProgress();
+    }
+  }, [onProgressUpdate]);
 
   const handleDownloadCertificate = async () => {
     try {
@@ -59,6 +75,32 @@ const CourseProgress = ({ studentId, courseId }) => {
         ></div>
       </div>
       <p className="text-sm mb-4">Progress: {progress}%</p>
+
+      {/* Module-level progress with validation status */}
+      <div className="mb-4">
+        <h3 className="text-lg font-medium mb-2">Module Progress</h3>
+        <div className="space-y-2">
+          {modules.map((module, index) => (
+            <div key={module.id} className="flex items-center justify-between">
+              <span className="text-sm">
+                {index + 1}. {module.title}
+                {module.validation_errors && module.validation_errors.length > 0 && (
+                  <span className="text-red-500 text-xs ml-2">
+                    ({module.validation_errors.length} issues)
+                  </span>
+                )}
+              </span>
+              {module.is_completed ? (
+                <i className="fas fa-check-circle text-green-500"></i>
+              ) : module.is_current ? (
+                <i className="fas fa-play-circle text-blue-500"></i>
+              ) : (
+                <i className="fas fa-circle text-gray-400"></i>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {completed ? (
         <button

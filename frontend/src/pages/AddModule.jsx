@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { addCourse } from '../services/teacherService';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { addModule } from '../services/teacherService';
 
-export default function AddCourse() {
-  const [form, setForm] = useState({ title: '', description: '', price: '' });
+export default function AddModule() {
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ title: '', description: '', content: '', order: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
-    if (!form.title.trim()) newErrors.title = 'Course title is required.';
+    if (!form.title.trim()) newErrors.title = 'Module title is required.';
     if (!form.description.trim()) newErrors.description = 'Description is required.';
-    if (!form.price || isNaN(form.price) || form.price <= 0) newErrors.price = 'Valid price is required.';
+    if (!form.content.trim()) newErrors.content = 'Content is required.';
+    if (!form.order || isNaN(form.order) || form.order < 0) newErrors.order = 'Valid order (non-negative number) is required.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -29,12 +32,14 @@ export default function AddCourse() {
     setLoading(true);
     setSuccess(false);
     try {
-      await addCourse(form);
+      await addModule(courseId, form);
       setSuccess(true);
-      setForm({ title: '', description: '', price: '' });
+      setForm({ title: '', description: '', content: '', order: '' });
       setErrors({});
+      // Optionally navigate back to modules page
+      setTimeout(() => navigate(`/teacher/courses/${courseId}/modules`), 2000);
     } catch (error) {
-      setErrors({ submit: 'Failed to add course. Please try again.' });
+      setErrors({ submit: 'Failed to add module. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -43,12 +48,12 @@ export default function AddCourse() {
   return (
     <div className="container mt-4">
       <Link to="/teacher" className="back-button">Back to Dashboard</Link>
-      <h3>Add New Course</h3>
-      {success && <div className="alert alert-success">Course added successfully!</div>}
+      <h3>Add New Module</h3>
+      {success && <div className="alert alert-success">Module added successfully! Redirecting...</div>}
       {errors.submit && <div className="alert alert-danger">{errors.submit}</div>}
       <form onSubmit={submit}>
         <div className="mb-3">
-          <label htmlFor="title" className="form-label">Course Title</label>
+          <label htmlFor="title" className="form-label">Module Title</label>
           <input
             type="text"
             className={`form-control ${errors.title ? 'is-invalid' : ''}`}
@@ -56,7 +61,7 @@ export default function AddCourse() {
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Enter course title"
+            placeholder="Enter module title"
           />
           {errors.title && <div className="invalid-feedback">{errors.title}</div>}
         </div>
@@ -69,27 +74,39 @@ export default function AddCourse() {
             rows="3"
             value={form.description}
             onChange={handleChange}
-            placeholder="Enter course description"
+            placeholder="Enter module description"
           />
           {errors.description && <div className="invalid-feedback">{errors.description}</div>}
         </div>
         <div className="mb-3">
-          <label htmlFor="price" className="form-label">Price</label>
+          <label htmlFor="content" className="form-label">Content</label>
+          <textarea
+            className={`form-control ${errors.content ? 'is-invalid' : ''}`}
+            id="content"
+            name="content"
+            rows="5"
+            value={form.content}
+            onChange={handleChange}
+            placeholder="Enter module content"
+          />
+          {errors.content && <div className="invalid-feedback">{errors.content}</div>}
+        </div>
+        <div className="mb-3">
+          <label htmlFor="order" className="form-label">Order</label>
           <input
             type="number"
-            className={`form-control ${errors.price ? 'is-invalid' : ''}`}
-            id="price"
-            name="price"
-            value={form.price}
+            className={`form-control ${errors.order ? 'is-invalid' : ''}`}
+            id="order"
+            name="order"
+            value={form.order}
             onChange={handleChange}
-            placeholder="Enter price"
+            placeholder="Enter order (e.g., 1, 2, 3...)"
             min="0"
-            step="0.01"
           />
-          {errors.price && <div className="invalid-feedback">{errors.price}</div>}
+          {errors.order && <div className="invalid-feedback">{errors.order}</div>}
         </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Course'}
+          {loading ? 'Adding...' : 'Add Module'}
         </button>
       </form>
     </div>

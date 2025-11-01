@@ -32,12 +32,12 @@ export default function TeacherRequests() {
   const acceptAndCreateSession = async (requestId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/teacher/requests/${requestId}/accept`, {
+      const response = await fetch(`http://127.0.0.1:5000/api/teacher/requests/${requestId}/accept`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         navigate(`/teacher/chat/${data.session_id}`);
       } else {

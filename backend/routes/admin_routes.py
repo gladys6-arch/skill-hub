@@ -267,5 +267,44 @@ def delete_user(user_id):
 @jwt_required()
 @role_required('admin')
 def get_revenue():
-    total_admin_revenue = db.session.query(db.func.sum(Payment.admin_share)).scalar() or 0
-    return jsonify({'total_admin_revenue': total_admin_revenue})
+    # Get all payments
+    payments = Payment.query.all()
+    total_revenue = sum(payment.admin_share for payment in payments)
+
+    # Get teacher revenue breakdown
+    teachers = User.query.filter_by(role='teacher').all()
+    teacher_revenues = []
+
+    for teacher in teachers:
+        # Get teacher's courses and skills
+        courses = Course.query.filter_by(teacher_id=teacher.id).all()
+        skills = Skill.query.filter_by(teacher_id=teacher.id).all()
+
+        course_ids = [c.id for c in courses]
+        skill_ids = [s.id for s in skills]
+
+        # Calculate teacher's total revenue
+        teacher_revenue = 0
+        if course_ids:
+            course_payments = Payment.query.filter(Payment.course_id.in_(course_ids)).all()
+            teacher_revenue += sum(p.teacher_share for p in course_payments)
+        if skill_ids:
+            skill_payments = Payment.query.filter(Payment.skill_id.in_(skill_ids)).all()
+            teacher_revenue += sum(p.teacher_share for p in skill_payments)
+
+        if teacher_revenue > 0 or courses or skills:
+            teacher_revenues.append({
+                'id': teacher.id,
+                'full_name': teacher.full_name,
+                'email': teacher.email,
+                'total_revenue': teacher_revenue,
+                'courses_count': len(courses),
+                'skills_count': len(skills)
+            })
+
+    return jsonify({
+        'total_revenue': total_revenue,
+        'total_teachers': len(teachers),
+        'total_payments': len(payments),
+        'teacher_revenues': teacher_revenues
+    })

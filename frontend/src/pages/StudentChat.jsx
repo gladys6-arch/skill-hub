@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { API_BASE_URL } from '../api';
 
-export default function Chat() {
+export default function StudentChat() {
   const { sessionId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [studentProgress, setStudentProgress] = useState([]);
   const [sessionData, setSessionData] = useState(null);
 
   useEffect(() => {
@@ -14,16 +13,10 @@ export default function Chat() {
     fetchMessages();
   }, [sessionId]);
 
-  useEffect(() => {
-    if (sessionData?.student_id) {
-      fetchStudentProgress();
-    }
-  }, [sessionData]);
-
   const fetchSessionData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/teacher/sessions`, {
+      const response = await fetch(`${API_BASE_URL}/api/student/sessions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const sessions = await response.json();
@@ -37,7 +30,7 @@ export default function Chat() {
   const fetchMessages = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/teacher/chat/${sessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/student/chat/${sessionId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -47,26 +40,12 @@ export default function Chat() {
     }
   };
 
-  const fetchStudentProgress = async () => {
-    if (!sessionData?.student_id) return;
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/teacher/student/${sessionData.student_id}/progress`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setStudentProgress(data);
-    } catch (error) {
-      console.error('Error fetching progress:', error);
-    }
-  };
-
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
-    
+
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/api/teacher/chat/${sessionId}/send`, {
+      await fetch(`${API_BASE_URL}/api/student/chat/${sessionId}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +53,7 @@ export default function Chat() {
         },
         body: JSON.stringify({ message: newMessage })
       });
-      
+
       setNewMessage('');
       fetchMessages();
     } catch (error) {
@@ -84,12 +63,12 @@ export default function Chat() {
 
   return (
     <div className="container-fluid mt-4">
-      <Link to="/teacher/sessions" className="back-button">Back to Sessions</Link>
       <div className="row">
-        <div className="col-md-8">
+        <div className="col-md-12">
           <div className="card">
             <div className="card-header">
-              <h5>Study Session Chat</h5>
+              <h5>Study Session Chat with {sessionData?.teacher_name}</h5>
+              <small className="text-muted">Subject: {sessionData?.subject}</small>
             </div>
             <div className="card-body" style={{height: '400px', overflowY: 'scroll'}}>
               {messages.map(msg => (
@@ -105,7 +84,7 @@ export default function Chat() {
                   className="btn btn-success me-2"
                   onClick={() => window.open('https://meet.google.com/new', '_blank')}
                 >
-                  📹 Start Video Call (Google Meet)
+                  📹 Join Video Call (Google Meet)
                 </button>
               </div>
               <div className="input-group">
@@ -121,33 +100,6 @@ export default function Chat() {
                   Send
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="col-md-4">
-          <div className="card">
-            <div className="card-header">
-              <h6>Student Progress</h6>
-            </div>
-            <div className="card-body">
-              {studentProgress.map((item, index) => (
-                <div key={index} className="mb-2">
-                  <div className="d-flex justify-content-between">
-                    <small><strong>{item.title}</strong></small>
-                    {item.completed && <span className="badge bg-success">✓</span>}
-                  </div>
-                  <div className="progress mb-1">
-                    <div 
-                      className="progress-bar" 
-                      style={{width: `${item.progress}%`}}
-                    >
-                      {item.progress}%
-                    </div>
-                  </div>
-                  <small className="text-muted">{item.type}</small>
-                </div>
-              ))}
             </div>
           </div>
         </div>

@@ -19,22 +19,29 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-content">
-        <div className="logo">SkillHub</div>
+        {/* <div className="logo">SkillHub</div> */}
 
         {user ? (
           <>
             <div className="nav-links">
               {user.role === 'admin' && (
                 <>
-                  <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
-                  <Link to="/admin/users" className="nav-link">Manage Users</Link>
+                  <Link to="/admin" className="nav-link">Dashboard</Link>
+                  <Link to="/admin/manage-users" className="nav-link">Total Users</Link>
+                  {/* <Link to="/admin/manage-users" className="nav-link">Total Students</Link> */}
+                  <Link to="/admin/revenue" className="nav-link">Platform Revenue</Link>
                 </>
               )}
               {user.role === 'teacher' && (
-                <>
-                  <Link to="/teacher/dashboard" className="nav-link">Dashboard</Link>
+                <div className="teacher-nav">
+                  <Link to="/teacher" className="nav-link">Student Progress</Link>
+                  <Link to="/teacher/add-skill" className="nav-link">Add Skill</Link>
+                  <Link to="/teacher/add-course" className="nav-link">Add Course</Link>
                   <Link to="/teacher/courses" className="nav-link">My Courses</Link>
-                </>
+                  <Link to="/teacher/balance" className="nav-link">Balance</Link>
+                  <Link to="/teacher/subscription" className="nav-link">Subscription</Link>
+                  <Link to="/teacher/sessions" className="nav-link">Chat Sessions</Link>
+                </div>
               )}
               {user.role === 'student' && (
                 <>

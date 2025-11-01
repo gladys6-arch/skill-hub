@@ -56,3 +56,11 @@ export const getStudentDetails = (id) => {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
+
+// -------------------- ADMIN REVENUE --------------------
+export const getAdminRevenue = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/admin/revenue`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

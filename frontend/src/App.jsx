@@ -9,7 +9,6 @@ import TeacherRoutes from './Routes/TeacherRoutes'
 import StudentRoutes from './Routes/StudentRoutes'
 import AdminLogin from "./pages/AdminLogin.jsx";
 
-import './App.css'
 import './components/Navbar.css'
 
 function App() {

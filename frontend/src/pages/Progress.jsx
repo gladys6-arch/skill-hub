@@ -197,15 +197,6 @@ export default function Progress() {
                             {item.status}
                           </button>
                           
-                          {!item.completed && (
-                            <button 
-                              className="btn btn-outline-primary btn-sm"
-                              onClick={() => updateProgress(item.id, Math.min(item.progress + 25, 100))}
-                            >
-                              <i className="fas fa-plus me-1"></i>
-                              Study More (+25%)
-                            </button>
-                          )}
                           
                           {item.completed && (
                             <button 

@@ -45,7 +45,7 @@ export default function AvailableCourses() {
 
   return (
     <div className="container mt-4">
-      <h3 className="mb-3">Available Courses</h3>
+      <h3>Available Courses</h3>
 
       {courses.length === 0 ? (
         <p>No courses available yet.</p>
@@ -68,12 +68,12 @@ export default function AvailableCourses() {
                   <p>
                     <strong>Price:</strong> KES {course.price || "Free"}
                   </p>
-                  <button
+                  {/* <button
                     className="btn btn-primary me-2"
                     onClick={() => navigate(`/student/course/${course.id}`)}
                   >
                     View Details
-                  </button>
+                  </button> */}
                   <button
                     className="btn btn-success"
                     onClick={() => handleEnroll(course.id)}

@@ -23,7 +23,7 @@ def get_students_progress():
             'student_email': student.email,
             'item_type': 'course',
             'item_name': course.title,
-            'progress': enrollment.progress,
+            'progress': enrollment.progress,  # This now uses the property that calculates from completed modules
             'completed': enrollment.completed,
             'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
         })
@@ -70,7 +70,7 @@ def get_course_students(course_id):
             'student_id': student.id,
             'student_name': student.full_name,
             'student_email': student.email,
-            'progress': enrollment.progress,
+            'progress': enrollment.progress,  # This now uses the property that calculates from completed modules
             'completed': enrollment.completed,
             'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
         })

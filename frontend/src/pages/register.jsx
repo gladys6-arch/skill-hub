@@ -11,6 +11,7 @@ function Register() {
     role: "student", // default role
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -84,14 +85,35 @@ function Register() {
 
         <div>
           <label htmlFor="password">Password:</label><br />
-          <input
-            id="password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Enter password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: '14px',
+                textDecoration: 'underline'
+              }}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
         </div>
 
         <div className="role-selection">
@@ -108,7 +130,7 @@ function Register() {
           </select>
         </div>
 
-        <button type="submit" className="btn">Register</button>
+        <button type="submit">Register</button>
       </form>
     </div>
   );
