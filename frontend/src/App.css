@@ -16,7 +16,7 @@ background-color: var(--background);
 line-height: 1.7;
 }
 
-/* 🌍 Layout */
+/* Layout */
 body {
 margin: 0;
 min-height: 100vh;
@@ -28,7 +28,7 @@ background: linear-gradient(160deg, #eeeae4 0%, #e7e1da 100%);
 color: var(--text-color);
 }
 
-/* 🌤️ Navbar */
+/* Navbar */
 .navbar {
 position: fixed;
 top: 0;
@@ -83,7 +83,7 @@ width: 100%;
 color: var(--accent-color);
 }
 
-/* 🍔 Menu Toggle (Hamburger) */
+/* Menu Toggle */
 .menu-toggle {
 display: none;
 flex-direction: column;
@@ -111,7 +111,7 @@ opacity: 0;
 transform: rotate(-45deg) translate(5px, -5px);
 }
 
-/* 📱 Responsive Navbar */
+/* Responsive Navbar */
 @media (max-width: 768px) {
 .menu-toggle {
 display: flex;
@@ -138,7 +138,7 @@ margin: 0.5rem 0;
 }
 }
 
-/* 🧾 Form Container */
+/*  Form Container */
 .form-container {
 background: var(--card-bg);
 border-radius: var(--border-radius);
@@ -211,7 +211,7 @@ border-color: var(--accent-color);
 box-shadow: 0 0 0 4px rgba(227, 139, 102, 0.15);
 }
 
-/* 🧡 Buttons */
+/* Buttons */
 button, .btn {
 border: none;
 background: var(--accent-color);
@@ -235,7 +235,7 @@ button:active, .btn:active {
 transform: scale(0.98);
 }
 
-/* 🏠 Home Page */
+/* Home Page */
 .home-container {
 background: var(--card-bg);
 border-radius: var(--border-radius);
@@ -267,7 +267,7 @@ justify-content: center;
 flex-wrap: wrap;
 }
 
-/* 📊 Dashboard */
+/* Dashboard */
 .dashboard-container {
 background: var(--card-bg);
 border-radius: var(--border-radius);
@@ -344,7 +344,7 @@ transform: translateY(-2px);
 box-shadow: 0 8px 20px rgba(227, 139, 102, 0.35);
 }
 
-/* 🏠 Home Page Preview */
+/* Home Page Preview */
 .dashboard-preview {
 margin-top: 3rem;
 padding-top: 2rem;
@@ -394,7 +394,7 @@ text-align: center;
 font-style: italic;
 }
 
-/* 🏠 Dashboard Access (Logged In) */
+/* Dashboard Access  */
 .dashboard-access {
 margin-top: 3rem;
 padding-top: 2rem;

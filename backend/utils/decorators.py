@@ -1,18 +1,19 @@
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from functools import wraps
 from flask import jsonify
+from flask_jwt_extended import get_jwt_identity
+from models import User
 
-def role_required(*roles):
-    """Allow access only if user has one of the allowed roles"""
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            verify_jwt_in_request()
-            user = get_jwt_identity()
+def role_required(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            identity = get_jwt_identity()
+            user_id = identity if isinstance(identity, int) else identity.get('id')
+            user = User.query.filter_by(id=user_id).first()
 
-            if user['role'] not in roles:
-                return jsonify({"error": "Unauthorized access"}), 403
+            if not user or user.role != role:
+                return jsonify({'message': 'Access denied'}), 403
 
-            return fn(*args, **kwargs)
-        return decorator
-    return wrapper
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator

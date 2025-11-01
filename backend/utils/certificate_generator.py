@@ -1,60 +1,55 @@
-import os
-from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.colors import HexColor
+import io
 from datetime import datetime
-from models import Certificate, Course, User
-from extensions import db
+import os
 
-def generate_certificate(student_id, course_id):
-    """Generates a certificate for a completed course."""
+def generate_certificate(student_name, course_title, cert_type="course"):
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Certificate background
+    p.setFillColor(HexColor('#f8f9fa'))
+    p.rect(50, 50, width-100, height-100, fill=1, stroke=0)
+    
+    # Title
+    p.setFillColor(HexColor('#2c3e50'))
+    p.setFont("Helvetica-Bold", 24)
+    p.drawCentredText(width/2, height-150, "SkillHub Certificate of Completion")
+    
+    # Content
+    p.setFont("Helvetica", 16)
+    p.drawCentredText(width/2, height-220, "This certifies that")
+    
+    p.setFont("Helvetica-Bold", 20)
+    p.setFillColor(HexColor('#3498db'))
+    p.drawCentredText(width/2, height-260, student_name)
+    
+    p.setFillColor(HexColor('#2c3e50'))
+    p.setFont("Helvetica", 16)
+    completion_text = f"has successfully completed the {cert_type}:"
+    p.drawCentredText(width/2, height-300, completion_text)
+    
+    p.setFont("Helvetica-Bold", 18)
+    p.setFillColor(HexColor('#27ae60'))
+    p.drawCentredText(width/2, height-340, course_title)
+    
+    # Date
+    p.setFillColor(HexColor('#2c3e50'))
+    p.setFont("Helvetica", 14)
+    p.drawCentredText(width/2, height-400, f"Date: {datetime.now().strftime('%B %d, %Y')}")
+    
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer
 
-    # Check if one already exists
-    existing = Certificate.query.filter_by(student_id=student_id, course_id=course_id).first()
-    if existing:
-        return existing.file_path  # Don't create duplicates
-
-    # Get student and course info
-    student = User.query.get(student_id)
-    course = Course.query.get(course_id)
-    if not student or not course:
-        return None
-
-    # Ensure directory exists
-    os.makedirs("certificates", exist_ok=True)
-
-    # Generate file name
-    file_name = f"certificates/{student.full_name.replace(' ', '_')}_{course.title.replace(' ', '_')}.pdf"
-
-    # Create PDF
-    c = canvas.Canvas(file_name, pagesize=A4)
-    width, height = A4
-
-    # Add content
-    c.setFont("Helvetica-Bold", 26)
-    c.drawCentredString(width / 2, height - 200, "Certificate of Completion")
-
-    c.setFont("Helvetica", 16)
-    c.drawCentredString(width / 2, height - 260, f"This certifies that")
-    c.setFont("Helvetica-Bold", 18)
-    c.drawCentredString(width / 2, height - 290, student.full_name)
-
-    c.setFont("Helvetica", 16)
-    c.drawCentredString(width / 2, height - 330, f"has successfully completed the course")
-    c.setFont("Helvetica-Bold", 18)
-    c.drawCentredString(width / 2, height - 360, f"{course.title}")
-
-    c.setFont("Helvetica", 12)
-    c.drawCentredString(width / 2, height - 400, f"Date: {datetime.now().strftime('%B %d, %Y')}")
-
-    c.line(150, height - 420, width - 150, height - 420)
-    c.setFont("Helvetica-Oblique", 12)
-    c.drawCentredString(width / 2, height - 440, "SkillHub Platform")
-
-    c.save()
-
-    # Save record in DB
-    cert = Certificate(student_id=student_id, course_id=course_id, file_path=file_name)
-    db.session.add(cert)
-    db.session.commit()
-
-    return file_name
+def save_certificate(student_name, course_title, file_path, cert_type="course"):
+    """Save certificate to file system"""
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    buffer = generate_certificate(student_name, course_title, cert_type)
+    with open(file_path, 'wb') as f:
+        f.write(buffer.getvalue())
+    return file_path

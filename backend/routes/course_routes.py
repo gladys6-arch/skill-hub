@@ -1,53 +1,61 @@
 from flask import Blueprint, request, jsonify
-from extensions import db
-from models.course import Course, Module
-from utils.decorators import role_required
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, Course, User
 
-course_bp = Blueprint('course_bp', __name__, url_prefix='/courses')
+course_bp = Blueprint('course_bp', __name__)
 
-# ===================== CREATE COURSE ===================== #
-@course_bp.route('/', methods=['POST'])
-@role_required('teacher')
-def create_course():
+# Teacher adds a course
+@course_bp.route('/teacher/add-course', methods=['POST'])
+@jwt_required()
+def add_course():
+    current_user_email = get_jwt_identity()
+    user = User.query.filter_by(email=current_user_email).first()
+
+    if not user or user.role != 'teacher':
+        return jsonify({'msg': 'Only teachers can add courses'}), 403
+
     data = request.get_json()
-    teacher = get_jwt_identity()
-
-    course = Course(
+    new_course = Course(
         title=data['title'],
         description=data['description'],
-        price=data.get('price', 0.0),
-        teacher_id=teacher['id']
+        link=data['link'],
+        price=data['price'],
+        teacher_name=user.name
     )
-
-    db.session.add(course)
+    db.session.add(new_course)
     db.session.commit()
-    return jsonify({"message": "Course created successfully"}), 201
 
-# ===================== ADD MODULE ===================== #
-@course_bp.route('/<int:course_id>/add-module', methods=['POST'])
-@role_required('teacher')
-def add_module(course_id):
-    data = request.get_json()
-    module = Module(
-        title=data['title'],
-        content=data['content'],
-        course_id=course_id
-    )
-    db.session.add(module)
-    db.session.commit()
-    return jsonify({"message": "Module added"}), 201
+    return jsonify({'msg': 'Course added successfully'}), 201
 
-# ===================== VIEW COURSES ===================== #
-@course_bp.route('/', methods=['GET'])
+
+# Student views all available courses
+@course_bp.route('/student/courses', methods=['GET'])
 def get_courses():
     courses = Course.query.all()
-    data = [
+    result = [
         {
-            "id": c.id,
-            "title": c.title,
-            "description": c.description,
-            "price": c.price
+            'id': c.id,
+            'title': c.title,
+            'description': c.description,
+            'price': c.price,
+            'teacher_name': c.teacher_name
         } for c in courses
     ]
-    return jsonify(data), 200
+    return jsonify(result), 200
+
+
+# Student views one course by ID
+@course_bp.route('/student/course/<int:course_id>', methods=['GET'])
+def get_course(course_id):
+    course = Course.query.get(course_id)
+    if not course:
+        return jsonify({'msg': 'Course not found'}), 404
+
+    return jsonify({
+        'id': course.id,
+        'title': course.title,
+        'description': course.description,
+        'price': course.price,
+        'teacher_name': course.teacher_name,
+        'link': course.link
+    }), 200
