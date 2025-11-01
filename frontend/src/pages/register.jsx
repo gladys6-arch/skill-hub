@@ -50,48 +50,43 @@ function Register() {
   };
 
   return (
-    <div>
-      <h2>Register</h2>
+    <div className="form-container">
+      <h2>Join SkillHub</h2>
+      <p className="form-description">Create your account to start learning or teaching</p>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+      {message && <p style={{ color: "green", textAlign: "center" }}>{message}</p>}
 
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Full Name:</label><br />
-          <input
-            type="text"
-            name="full_name"
-            value={formData.full_name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <input
+          type="text"
+          name="full_name"
+          placeholder="Full Name"
+          value={formData.full_name}
+          onChange={handleChange}
+          required
+        />
 
-        <div>
-          <label>Email:</label><br />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
 
-        <div>
-          <label>Password:</label><br />
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
 
-        <div>
-          <label>Role:</label><br />
+        <div className="role-selection">
+          <label>Choose your role:</label>
           <select
             name="role"
             value={formData.role}
@@ -103,7 +98,7 @@ function Register() {
           </select>
         </div>
 
-        <button type="submit">Register</button>
+        <button type="submit" className="btn">Register</button>
       </form>
     </div>
   );

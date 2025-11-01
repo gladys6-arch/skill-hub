@@ -1,54 +1,57 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import "./Navbar.css";
+
 function Navbar() {
   const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
 
   return (
-    <nav style={styles.nav}>
-      <div style={styles.logoArea}>
-        <h2 style={{ margin: 0 }}>SkillHub</h2>
-      </div>
+    <nav className="navbar">
+      <div className="navbar-content">
+        <Link to="/" className="logo">
+          SkillHub
+        </Link>
 
-      {user && (
-        <div style={styles.userArea}>
-          <span style={styles.welcome}>
-            Welcome, {user.full_name || user.email}
-          </span>
-          <button onClick={logout} style={styles.button}>Logout</button>
+        <div className={`nav-links ${menuOpen ? "active" : ""}`}>
+          <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>
+            Home
+          </Link>
+          {!user && (
+            <>
+              <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>
+                Login
+              </Link>
+              <Link to="/register" className="nav-link" onClick={() => setMenuOpen(false)}>
+                Register
+              </Link>
+            </>
+          )}
+          {user && (
+            <>
+              <span className="nav-link">
+                Welcome, {user.full_name || user.email}
+              </span>
+              <button onClick={logout} className="logout-btn">
+                Logout
+              </button>
+            </>
+          )}
         </div>
-      )}
+
+        <div className="menu-toggle" onClick={toggleMenu}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
     </nav>
   );
 }
-
-const styles = {
-  nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px 20px",
-    borderBottom: "1px solid #ccc",
-  },
-  logoArea: {
-    display: "flex",
-    alignItems: "center",
-  },
-  userArea: {
-    display: "flex",
-    alignItems: "center",
-    gap: "15px",
-  },
-  welcome: {
-    color: "#333",
-    fontWeight: "bold",
-  },
-  button: {
-    background: "none",
-    border: "1px solid #333",
-    borderRadius: "4px",
-    padding: "5px 10px",
-    cursor: "pointer",
-  },
-};
 
 export default Navbar;

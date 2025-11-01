@@ -22,7 +22,6 @@ def create_app():
     app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
     app.register_blueprint(student_bp, url_prefix='/api/student')
     app.register_blueprint(payment_bp, url_prefix='/api/payment')
-    app.register_blueprint(course_bp, url_prefix='/api/courses')
 
     return app
 
