@@ -51,43 +51,53 @@ function Register() {
 
   return (
     <div className="form-container">
-      <h2>Join SkillHub</h2>
-      <p className="form-description">Create your account to start learning or teaching</p>
+      <h2>Register</h2>
+      <p className="form-description">Create your account to get started with Skill Hub.</p>
 
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-      {message && <p style={{ color: "green", textAlign: "center" }}>{message}</p>}
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+      {message && <p style={{ color: "green", marginBottom: "1rem" }}>{message}</p>}
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="full_name"
-          placeholder="Full Name"
-          value={formData.full_name}
-          onChange={handleChange}
-          required
-        />
+        <div>
+          <label htmlFor="full_name">Full Name:</label><br />
+          <input
+            id="full_name"
+            type="text"
+            name="full_name"
+            value={formData.full_name}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+        <div>
+          <label htmlFor="email">Email:</label><br />
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        <div>
+          <label htmlFor="password">Password:</label><br />
+          <input
+            id="password"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
         <div className="role-selection">
-          <label>Choose your role:</label>
+          <label htmlFor="role">Role:</label><br />
           <select
+            id="role"
             name="role"
             value={formData.role}
             onChange={handleChange}

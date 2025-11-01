@@ -1,47 +1,41 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
-from models import User
 from extensions import db
+from models import User
+from flask_jwt_extended import create_access_token
 
-auth_bp = Blueprint('auth', __name__)
-
-@auth_bp.route('/', methods=['GET'])
-def auth_info():
-    return jsonify({
-        'message': 'SkillHub Auth API',
-        'endpoints': {
-            'login': 'POST /api/auth/login',
-            'register': 'POST /api/auth/register'
-        },
-        'status': 'active'
-    })
-
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    user = User.query.filter_by(email=data['email']).first()
-    
-    if user and user.check_password(data['password']):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({'token': access_token, 'role': user.role})
-    
-    return jsonify({'message': 'Invalid credentials'}), 401
+auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': 'Email already exists'}), 400
-    
-    user = User(
-        full_name=data['full_name'],
-        email=data['email'],
-        role=data['role']
-    )
-    user.set_password(data['password'])
-    
+    full_name = data.get('full_name')
+    email = data.get('email')
+    password = data.get('password')
+    role = data.get('role', 'student')
+
+    if not all([full_name, email, password]):
+        return jsonify({"error": "Missing fields"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered"}), 400
+
+    user = User(full_name=full_name, email=email, role=role)
+    user.set_password(password)
     db.session.add(user)
     db.session.commit()
-    
-    return jsonify({'message': 'User created successfully'}), 201
+
+    return jsonify({"message": f"{role.capitalize()} registered successfully"}), 201
+
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.check_password(password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    token = create_access_token(identity={"id": user.id, "role": user.role})
+    return jsonify({"token": token, "role": user.role, "id": user.id})

@@ -43,26 +43,32 @@ function Login() {
 
   return (
     <div className="form-container">
-      <h2>Login to SkillHub</h2>
-      <p className="form-description">Enter your credentials to access your account</p>
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+      <h2>Login</h2>
+      <p className="form-description">Welcome back! Please sign in to your account.</p>
+      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <div>
+          <label htmlFor="email">Email:</label><br />
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div>
+          <label htmlFor="password">Password:</label><br />
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
         <button type="submit" className="btn">Login</button>
       </form>

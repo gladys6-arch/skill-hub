@@ -1,90 +1,53 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import User, Course, Module
 from extensions import db
+from models import Skill, Course, Enrollment, User
 from utils.decorators import role_required
+from flask_jwt_extended import get_jwt_identity
 
-teacher_bp = Blueprint('teacher', __name__)
+teacher_bp = Blueprint('teacher_bp', __name__, url_prefix='/teacher')
 
-@teacher_bp.route('/', methods=['GET'])
-def teacher_info():
-    return jsonify({
-        'message': 'SkillHub Teacher API',
-        'endpoints': {
-            'dashboard': 'GET /api/teacher/dashboard',
-            'courses': 'GET /api/teacher/courses',
-            'create_course': 'POST /api/teacher/courses'
-        },
-        'status': 'active'
-    })
-
-@teacher_bp.route('/dashboard', methods=['GET'])
-@jwt_required()
+@teacher_bp.route('/skills', methods=['POST'])
 @role_required('teacher')
-def dashboard():
-    teacher_id = get_jwt_identity()
-    courses = Course.query.filter_by(teacher_id=teacher_id).all()
-    
-    return jsonify([{
-        'id': c.id,
-        'title': c.title,
-        'description': c.description,
-        'price': c.price
-    } for c in courses])
-
-@teacher_bp.route('/courses', methods=['GET'])
-@jwt_required()
-@role_required('teacher')
-def get_my_courses():
-    teacher_id = get_jwt_identity()
-    courses = Course.query.filter_by(teacher_id=teacher_id).all()
-    return jsonify([{
-        'id': c.id,
-        'title': c.title,
-        'description': c.description,
-        'price': c.price
-    } for c in courses])
-
-@teacher_bp.route('/courses', methods=['POST'])
-@jwt_required()
-@role_required('teacher')
-def create_course():
+def create_skill():
+    user = get_jwt_identity()
     data = request.get_json()
-    teacher_id = get_jwt_identity()
-    
-    course = Course(
-        title=data['title'],
-        description=data['description'],
-        price=data['price'],
-        teacher_id=teacher_id
-    )
-    
-    db.session.add(course)
+    s = Skill(name=data['name'], description=data.get('description',''), price=data.get('price',0.0), teacher_id=user['id'])
+    db.session.add(s)
     db.session.commit()
-    return jsonify({'message': 'Course created successfully'}), 201
+    return jsonify({"message":"Skill created", "skill_id":s.id}), 201
 
-@teacher_bp.route('/courses/<int:course_id>', methods=['PUT'])
-@jwt_required()
+@teacher_bp.route('/balance', methods=['GET'])
 @role_required('teacher')
-def update_course(course_id):
-    teacher_id = get_jwt_identity()
-    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first_or_404()
-    
-    data = request.get_json()
-    course.title = data.get('title', course.title)
-    course.description = data.get('description', course.description)
-    course.price = data.get('price', course.price)
-    
-    db.session.commit()
-    return jsonify({'message': 'Course updated successfully'})
+def my_balance():
+    user = get_jwt_identity()
+    teacher = User.query.get(user['id'])
+    return jsonify({"balance": teacher.balance or 0}), 200
 
-@teacher_bp.route('/courses/<int:course_id>', methods=['DELETE'])
-@jwt_required()
+@teacher_bp.route('/students/progress', methods=['GET'])
 @role_required('teacher')
-def delete_course(course_id):
-    teacher_id = get_jwt_identity()
-    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first_or_404()
-    
-    db.session.delete(course)
-    db.session.commit()
-    return jsonify({'message': 'Course deleted successfully'})
+def students_progress():
+    user = get_jwt_identity()
+    # find enrollments for courses taught by teacher
+    enrollments = Enrollment.query.join(Course).filter(Course.teacher_id==user['id']).all()
+    data = [{"student_id": e.student_id, "course_id": e.course_id, "progress": e.progress, "completed": e.completed} for e in enrollments]
+    return jsonify(data), 200
+
+# Teacher CRUD on own skills (example)
+@teacher_bp.route('/skill/<int:skill_id>', methods=['PUT','DELETE'])
+@role_required('teacher')
+def modify_skill(skill_id):
+    user = get_jwt_identity()
+    s = Skill.query.get(skill_id)
+    if not s or s.teacher_id != user['id']:
+        return jsonify({"error":"Skill not found or unauthorized"}), 403
+    if request.method == 'PUT':
+        data = request.get_json()
+        s.name = data.get('name', s.name)
+        s.description = data.get('description', s.description)
+        s.price = data.get('price', s.price)
+        db.session.commit()
+        return jsonify({"message":"Skill updated"}), 200
+    else:
+        db.session.delete(s)
+        db.session.commit()
+        return jsonify({"message":"Skill deleted"}), 200

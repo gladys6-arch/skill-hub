@@ -7,29 +7,27 @@ student_skill = db.Table(
     db.Column('skill_id', db.Integer, db.ForeignKey('skill.id'), primary_key=True)
 )
 
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200))
-    role = db.Column(db.String(20), nullable=False)  
+    role = db.Column(db.String(20), nullable=False)  # 'admin', 'teacher', 'student'
+    balance = db.Column(db.Float, default=0.0)
 
-    #relationships
+    # Relationships
     taught_courses = db.relationship('Course', back_populates='teacher', cascade="all, delete-orphan")
     enrollments = db.relationship('Enrollment', back_populates='student', cascade="all, delete-orphan")
     payments = db.relationship('Payment', back_populates='student', cascade="all, delete-orphan")
     certificates = db.relationship('Certificate', back_populates='student', cascade="all, delete-orphan")
     reviews = db.relationship('Review', back_populates='student', cascade="all, delete-orphan")
     ratings = db.relationship('Rating', back_populates='student', cascade="all, delete-orphan")
+    module_completions = db.relationship('ModuleCompletion', back_populates='student', cascade="all, delete-orphan")
 
-    skills = db.relationship(
-        'Skill',
-        secondary=student_skill,
-        back_populates='students'
-    )
+    # Skills many-to-many
+    skills = db.relationship('Skill', secondary=student_skill, back_populates='students')
 
-    #password utilities
+    # Password utilities
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
