@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMySkills, updateSkill } from '../services/teacherService';
 
-export default function TeacherSkills() {
+function TeacherSkills() {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingSkill, setEditingSkill] = useState(null);
@@ -19,19 +19,21 @@ export default function TeacherSkills() {
       }
     };
 
+    fetchSkills();
+  }, []);
+
   const handleUpdateSkill = async (e) => {
     e.preventDefault();
     try {
       await updateSkill(editingSkill.id, editingSkill);
       setEditingSkill(null);
-      fetchSkills();
+      const res = await getMySkills();
+      setSkills(res.data);
       alert('Skill updated successfully');
     } catch (error) {
       alert('Error updating skill');
     }
   };
-    fetchSkills();
-  }, []);
 
   if (loading) return <div>Loading...</div>;
 
@@ -63,7 +65,9 @@ export default function TeacherSkills() {
                           type="text"
                           className="form-control"
                           value={editingSkill.name}
-                          onChange={(e) => setEditingSkill({...editingSkill, name: e.target.value})}
+                          onChange={(e) =>
+                            setEditingSkill({ ...editingSkill, name: e.target.value })
+                          }
                         />
                       </td>
                       <td>
@@ -71,7 +75,9 @@ export default function TeacherSkills() {
                           type="text"
                           className="form-control"
                           value={editingSkill.description}
-                          onChange={(e) => setEditingSkill({...editingSkill, description: e.target.value})}
+                          onChange={(e) =>
+                            setEditingSkill({ ...editingSkill, description: e.target.value })
+                          }
                         />
                       </td>
                       <td>
@@ -79,12 +85,24 @@ export default function TeacherSkills() {
                           type="number"
                           className="form-control"
                           value={editingSkill.price}
-                          onChange={(e) => setEditingSkill({...editingSkill, price: e.target.value})}
+                          onChange={(e) =>
+                            setEditingSkill({ ...editingSkill, price: e.target.value })
+                          }
                         />
                       </td>
                       <td>
-                        <button className="btn btn-success btn-sm me-1" onClick={handleUpdateSkill}>Save</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => setEditingSkill(null)}>Cancel</button>
+                        <button
+                          className="btn btn-success btn-sm me-1"
+                          onClick={handleUpdateSkill}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setEditingSkill(null)}
+                        >
+                          Cancel
+                        </button>
                       </td>
                     </>
                   ) : (
@@ -93,12 +111,17 @@ export default function TeacherSkills() {
                       <td>{skill.description}</td>
                       <td>${skill.price}</td>
                       <td>
-                        <button className="btn btn-secondary btn-sm" onClick={() => setEditingSkill(skill)}>Edit</button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setEditingSkill(skill)}
+                        >
+                          Edit
+                        </button>
                       </td>
                     </>
                   )}
                 </tr>
-              ))
+              ))}
             </tbody>
           </table>
         </div>
@@ -110,3 +133,5 @@ export default function TeacherSkills() {
     </div>
   );
 }
+
+export default TeacherSkills;

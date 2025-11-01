@@ -4,7 +4,7 @@ import TeacherDashboard from '../pages/TeacherDashboard';
 import AddSkill from '../pages/AddSkill';
 import AddCourse from '../pages/AddCourse';
 import TeacherCourses from '../pages/TeacherCourses';
-import TeacherSkills from '../pages/TeacherSkillS';
+import TeacherSkills from '../pages/TeacherSkills';
 import TeacherRequests from '../pages/TeacherRequests';
 import TeacherBalance from '../pages/TeacherBalance';
 import Modules from '../pages/Modules';

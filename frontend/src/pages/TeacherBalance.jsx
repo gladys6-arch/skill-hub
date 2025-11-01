@@ -1,27 +1,29 @@
 import React, { useEffect, useState } from 'react';
+import { getTeacherBalance } from '../services/teacherService';
 
 export default function TeacherBalance() {
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://127.0.0.1:5000/api/teacher/balance', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setBalance(data);
-      } catch (error) {
-        console.error('Error fetching balance:', error);
+        const res = await getTeacherBalance(); // uses axios with token inside service
+        setBalance(res.data); // axios returns data under res.data
+      } catch (err) {
+        console.error('Error fetching balance:', err);
+        setError('Failed to load balance.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchBalance();
   }, []);
 
   if (loading) return <div className="container mt-4"><h3>Loading...</h3></div>;
+  if (error) return <div className="container mt-4 text-danger">{error}</div>;
 
   return (
     <div className="container mt-4">

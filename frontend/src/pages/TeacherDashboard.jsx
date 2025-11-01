@@ -1,103 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { getMyCourses, getMySkills, getTeacherRequests } from '../services/teacherService';
+import React, { useEffect, useState } from "react";
+import { getMyCourses } from "../services/teacherService";
+
 
 export default function TeacherDashboard() {
-  const [stats, setStats] = useState({ courses: 0, skills: 0, requests: 0 });
+  const [courses, setCourses] = useState([]);
+  const [progress, setProgress] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const [coursesRes, skillsRes, requestsRes] = await Promise.all([
+        const [coursesRes, progressRes] = await Promise.all([
           getMyCourses(),
-          getMySkills(),
-          getTeacherRequests()
+          getStudentsProgress()
         ]);
-        setStats({
-          courses: coursesRes.data.length,
-          skills: skillsRes.data.length,
-          requests: requestsRes.data.length
-        });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
+
+        setCourses(coursesRes.data);
+        setProgress(progressRes.data);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchStats();
+
+    fetchData();
   }, []);
+
+  if (loading) return <div className="container mt-4">Loading...</div>;
+  if (error) return <div className="container mt-4 text-danger">{error}</div>;
 
   return (
     <div className="container mt-4">
-      <h2>Teacher Dashboard</h2>
-      
+      <h3>Teacher Dashboard</h3>
+
       <div className="row mb-4">
-        <div className="col-md-4">
-          <div className="card">
-            <div className="card-body">
-              <h5>My Courses: {stats.courses}</h5>
+        <div className="col-md-6">
+          <h5>My Courses</h5>
+          {courses.length > 0 ? (
+            <ul className="list-group">
+              {courses.map((course) => (
+                <li key={course.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  {course.title}
+                  <Link to={`/teacher/courses/${course.id}/edit`} className="btn btn-sm btn-secondary">
+                    Edit
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="alert alert-info">
+              No courses created yet. <Link to="/teacher/add-course">Create your first course</Link>
             </div>
-          </div>
+          )}
         </div>
-        <div className="col-md-4">
-          <div className="card">
-            <div className="card-body">
-              <h5>My Skills: {stats.skills}</h5>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card">
-            <div className="card-body">
-              <h5>Student Requests: {stats.requests}</h5>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="row">
         <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5>Course Management</h5>
-            </div>
-            <div className="card-body">
-              <Link to="/teacher/courses" className="btn btn-primary me-2">My Courses</Link>
-              <Link to="/teacher/add-course" className="btn btn-success">Add Course</Link>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5>Skill Management</h5>
-            </div>
-            <div className="card-body">
-              <Link to="/teacher/skills" className="btn btn-primary me-2">My Skills</Link>
-              <Link to="/teacher/add-skill" className="btn btn-success">Add Skill</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="row mt-3">
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5>Student Interactions</h5>
-            </div>
-            <div className="card-body">
-              <Link to="/teacher/requests" className="btn btn-info">View Student Requests</Link>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5>Earnings</h5>
-            </div>
-            <div className="card-body">
-              <Link to="/teacher/balance" className="btn btn-success">View My Earnings</Link>
-            </div>
-          </div>
+          <h5>Student Progress</h5>
+          {progress.length > 0 ? (
+            <ul className="list-group">
+              {progress.map((p, index) => (
+                <li key={index} className="list-group-item">
+                  {p.student_name} - {p.course_title || p.skill_name}: {p.progress}%
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="alert alert-info">No student progress data available.</div>
+          )}
         </div>
       </div>
     </div>
