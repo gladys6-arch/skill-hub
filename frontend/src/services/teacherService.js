@@ -130,3 +130,39 @@ export const getStudySessions = () => {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
+
+// -------------------- QUIZ MANAGEMENT --------------------
+export const createFinalQuiz = (courseId, quizData) => {
+  const token = localStorage.getItem("token");
+  return axios.post(`${API_BASE_URL}/api/teacher/courses/${courseId}/final-quiz`, quizData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const getFinalQuiz = (courseId) => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/teacher/courses/${courseId}/final-quiz`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const addQuizQuestion = (quizId, questionData) => {
+  const token = localStorage.getItem("token");
+  return axios.post(`${API_BASE_URL}/api/teacher/quizzes/${quizId}/questions`, questionData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const getQuizResults = (courseId) => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/teacher/courses/${courseId}/final-quiz/results`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const getTeacherQuizzes = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/teacher/quizzes`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import User, Course, Module, Skill, Subscription
-from models.course import Enrollment, SkillEnrollment
+from models.course import Enrollment, SkillEnrollment, Quiz, Question, Answer, QuizAttempt
 from extensions import db
 from utils.decorators import role_required
 
@@ -558,4 +558,219 @@ def get_teacher_subscription():
         'status': subscription.status,
         'renewal_date': subscription.renewal_date.strftime('%Y-%m-%d') if subscription.renewal_date else None,
         'created_at': subscription.created_at.strftime('%Y-%m-%d') if subscription.created_at else None
+    })
+
+# Get teacher's quizzes
+@teacher_bp.route('/quizzes', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_teacher_quizzes():
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    # Get quizzes from courses the teacher owns
+    quizzes = Quiz.query.join(Course).filter(Course.teacher_id == teacher_id).all()
+
+    quiz_data = []
+    for quiz in quizzes:
+        questions_count = Question.query.filter_by(quiz_id=quiz.id).count()
+        attempts_count = QuizAttempt.query.filter_by(quiz_id=quiz.id).count()
+
+        quiz_data.append({
+            'id': quiz.id,
+            'title': quiz.title,
+            'course_title': quiz.course.title if quiz.course else 'N/A',
+            'course_id': quiz.course_id,
+            'is_final_quiz': quiz.is_final_quiz,
+            'passing_score': quiz.passing_score,
+            'questions_count': questions_count,
+            'attempts_count': attempts_count,
+            'created_at': quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else None
+        })
+
+    response = jsonify({
+        'quizzes': quiz_data,
+        'total_quizzes': len(quiz_data)
+    })
+
+    # Add CORS headers explicitly for this endpoint
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+
+    return response
+
+# Final Quiz Management for Teachers
+@teacher_bp.route('/courses/<int:course_id>/final-quiz', methods=['POST'])
+@jwt_required()
+@role_required('teacher')
+def create_final_quiz(course_id):
+    data = request.get_json()
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return jsonify({'message': 'Course not found or unauthorized'}), 404
+
+    # Check if final quiz already exists
+    existing_quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    if existing_quiz:
+        return jsonify({'message': 'Final quiz already exists for this course'}), 400
+
+    quiz = Quiz(
+        title=data['title'],
+        course_id=course_id,
+        passing_score=data.get('passing_score', 70),
+        is_final_quiz=True
+    )
+    db.session.add(quiz)
+    db.session.commit()
+
+    response = jsonify({
+        'message': 'Final quiz created successfully',
+        'quiz_id': quiz.id
+    })
+
+    # Add CORS headers explicitly for this endpoint
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+
+    return response, 201
+
+@teacher_bp.route('/courses/<int:course_id>/final-quiz', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_final_quiz(course_id):
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return jsonify({'message': 'Course not found or unauthorized'}), 404
+
+    quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    if not quiz:
+        return jsonify({'message': 'No final quiz found for this course'}), 404
+
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
+    questions_data = []
+    for question in questions:
+        answers = Answer.query.filter_by(question_id=question.id).all()
+        questions_data.append({
+            'id': question.id,
+            'question_text': question.question_text,
+            'question_type': question.question_type,
+            'answers': [{
+                'id': answer.id,
+                'answer_text': answer.answer_text,
+                'is_correct': answer.is_correct
+            } for answer in answers]
+        })
+
+    response = jsonify({
+        'quiz_id': quiz.id,
+        'title': quiz.title,
+        'passing_score': quiz.passing_score,
+        'questions': questions_data
+    })
+
+    # Add CORS headers explicitly for this endpoint
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+
+    return response
+
+@teacher_bp.route('/quizzes/<int:quiz_id>/questions', methods=['POST'])
+@jwt_required()
+@role_required('teacher')
+def add_quiz_question(quiz_id):
+    data = request.get_json()
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    quiz = Quiz.query.get_or_404(quiz_id)
+    if quiz.module and quiz.module.course.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+    if quiz.course and quiz.course.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+
+    question = Question(
+        quiz_id=quiz_id,
+        question_text=data['question_text'],
+        question_type=data['question_type']
+    )
+    db.session.add(question)
+    db.session.commit()
+
+    # Add answers
+    for answer_data in data['answers']:
+        answer = Answer(
+            question_id=question.id,
+            answer_text=answer_data['answer_text'],
+            is_correct=answer_data.get('is_correct', False)
+        )
+        db.session.add(answer)
+    db.session.commit()
+
+    response = jsonify({'message': 'Question added successfully'})
+
+    # Add CORS headers explicitly for this endpoint
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+
+    return response, 201
+
+@teacher_bp.route('/courses/<int:course_id>/final-quiz/results', methods=['GET'])
+@jwt_required()
+@role_required('teacher')
+def get_final_quiz_results(course_id):
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return jsonify({'message': 'Course not found or unauthorized'}), 404
+
+    quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    if not quiz:
+        return jsonify({'message': 'No final quiz found for this course'}), 404
+
+    attempts = QuizAttempt.query.filter_by(quiz_id=quiz.id).all()
+    results = []
+
+    for attempt in attempts:
+        total_questions = len(quiz.questions)
+        correct_answers = 0
+
+        for response in attempt.responses:
+            selected_answer = Answer.query.get(response.selected_answer_id)
+            if selected_answer and selected_answer.is_correct:
+                correct_answers += 1
+
+        score_percentage = int((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+        passed = score_percentage >= quiz.passing_score
+
+        results.append({
+            'student_name': attempt.student.full_name,
+            'student_email': attempt.student.email,
+            'score': score_percentage,
+            'passed': passed,
+            'attempted_at': attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else None,
+            'total_questions': total_questions,
+            'correct_answers': correct_answers
+        })
+
+    return jsonify({
+        'course_title': course.title,
+        'quiz_title': quiz.title,
+        'passing_score': quiz.passing_score,
+        'results': results
     })

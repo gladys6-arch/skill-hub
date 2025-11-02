@@ -4,7 +4,7 @@ from extensions import db
 from utils.decorators import role_required
 from models import User
 from models.payment import Payment
-from models.course import Course, Skill, Enrollment, SkillEnrollment
+from models.course import Course, Skill, Enrollment, SkillEnrollment, Module, ModuleProgress
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -308,3 +308,162 @@ def get_revenue():
         'total_payments': len(payments),
         'teacher_revenues': teacher_revenues
     })
+
+# Student Progress Tracking (similar to teacher functionality)
+@admin_bp.route('/student-progress', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_all_student_progress():
+    # Get all students with their progress
+    students = User.query.filter_by(role='student').all()
+    student_progress_list = []
+
+    for student in students:
+        # Course progress
+        course_enrollments = Enrollment.query.filter_by(student_id=student.id).all()
+        course_progress = []
+        for enrollment in course_enrollments:
+            course = Course.query.get(enrollment.course_id)
+            if course:
+                # Calculate progress based on ModuleProgress
+                total_modules = Module.query.filter_by(course_id=course.id).count()
+                completed_modules = ModuleProgress.query.filter_by(
+                    student_id=student.id,
+                    completed=True
+                ).join(Module).filter(Module.course_id == course.id).count()
+
+                progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
+                completed = progress_percentage >= 100
+
+                course_progress.append({
+                    'course_id': course.id,
+                    'course_title': course.title,
+                    'progress': progress_percentage,
+                    'completed': completed,
+                    'modules_completed': completed_modules,
+                    'total_modules': total_modules,
+                    'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+                })
+
+        # Skill progress
+        skill_enrollments = SkillEnrollment.query.filter_by(student_id=student.id).all()
+        skill_progress = []
+        for enrollment in skill_enrollments:
+            skill = Skill.query.get(enrollment.skill_id)
+            if skill:
+                skill_progress.append({
+                    'skill_id': skill.id,
+                    'skill_name': skill.name,
+                    'progress': enrollment.progress,
+                    'completed': enrollment.completed,
+                    'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+                })
+
+        if course_progress or skill_progress:  # Only include students with enrollments
+            student_progress_list.append({
+                'student_id': student.id,
+                'student_name': student.full_name,
+                'student_email': student.email,
+                'course_progress': course_progress,
+                'skill_progress': skill_progress,
+                'total_courses': len(course_progress),
+                'total_skills': len(skill_progress),
+                'completed_courses': len([cp for cp in course_progress if cp['completed']]),
+                'completed_skills': len([sp for sp in skill_progress if sp['completed']])
+            })
+
+    return jsonify({
+        'total_students': len(students),
+        'students_with_progress': len(student_progress_list),
+        'student_progress': student_progress_list
+    })
+
+# Get specific student's detailed progress
+@admin_bp.route('/students/<int:student_id>/progress', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_student_progress_detail(student_id):
+    student = User.query.filter_by(id=student_id, role='student').first_or_404()
+
+    # Course progress with detailed module information
+    course_enrollments = Enrollment.query.filter_by(student_id=student_id).all()
+    course_progress = []
+    for enrollment in course_enrollments:
+        course = Course.query.get(enrollment.course_id)
+        if course:
+            # Get module details
+            modules = Module.query.filter_by(course_id=course.id).all()
+            module_details = []
+            for module in modules:
+                progress = ModuleProgress.query.filter_by(
+                    student_id=student_id,
+                    module_id=module.id
+                ).first()
+
+                module_details.append({
+                    'module_id': module.id,
+                    'module_title': module.title,
+                    'completed': progress.completed if progress else False,
+                    'completed_at': progress.completed_at.strftime('%Y-%m-%d %H:%M') if progress and progress.completed_at else None
+                })
+
+            total_modules = len(modules)
+            completed_modules = len([m for m in module_details if m['completed']])
+            progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
+
+            course_progress.append({
+                'course_id': course.id,
+                'course_title': course.title,
+                'teacher_name': course.teacher.full_name if course.teacher else 'Unknown',
+                'progress_percentage': progress_percentage,
+                'completed': progress_percentage >= 100,
+                'modules': module_details,
+                'modules_completed': completed_modules,
+                'total_modules': total_modules,
+                'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+            })
+
+    # Skill progress
+    skill_enrollments = SkillEnrollment.query.filter_by(student_id=student_id).all()
+    skill_progress = []
+    for enrollment in skill_enrollments:
+        skill = Skill.query.get(enrollment.skill_id)
+        if skill:
+            skill_progress.append({
+                'skill_id': skill.id,
+                'skill_name': skill.name,
+                'teacher_name': skill.teacher.full_name if skill.teacher else 'Unknown',
+                'progress': enrollment.progress,
+                'completed': enrollment.completed,
+                'date_enrolled': enrollment.date_enrolled.strftime('%Y-%m-%d') if enrollment.date_enrolled else None
+            })
+
+    return jsonify({
+        'student': {
+            'id': student.id,
+            'name': student.full_name,
+            'email': student.email
+        },
+        'course_progress': course_progress,
+        'skill_progress': skill_progress,
+        'summary': {
+            'total_courses': len(course_progress),
+            'completed_courses': len([cp for cp in course_progress if cp['completed']]),
+            'total_skills': len(skill_progress),
+            'completed_skills': len([sp for sp in skill_progress if sp['completed']]),
+            'overall_completion_rate': calculate_overall_completion_rate(course_progress, skill_progress)
+        }
+    })
+
+def calculate_overall_completion_rate(course_progress, skill_progress):
+    """Calculate overall completion rate across all enrollments"""
+    total_items = len(course_progress) + len(skill_progress)
+    if total_items == 0:
+        return 0
+
+    completed_items = (
+        len([cp for cp in course_progress if cp['completed']]) +
+        len([sp for sp in skill_progress if sp['completed']])
+    )
+
+    return int((completed_items / total_items) * 100)

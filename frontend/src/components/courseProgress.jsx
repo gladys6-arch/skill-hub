@@ -19,6 +19,11 @@ const CourseProgress = ({ studentId, courseId, onProgressUpdate }) => {
       setProgress(response.data.overall_progress);
       setCompleted(response.data.completed);
 
+      // Store additional progress breakdown if available
+      if (response.data.module_progress !== undefined) {
+        // Could store this in state if needed for more detailed display
+      }
+
       // Fetch module details with validation status
       const modulesResponse = await axios.get(
         `${BACKEND_URL}/api/student/courses/${courseId}/modules`,
@@ -45,8 +50,9 @@ const CourseProgress = ({ studentId, courseId, onProgressUpdate }) => {
   const handleDownloadCertificate = async () => {
     try {
       const response = await axios.get(
-        `${BACKEND_URL}/student/download_certificate/${studentId}/${courseId}`,
+        `${BACKEND_URL}/api/student/certificate/${courseId}`,
         {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           responseType: "blob", // ensures it downloads file properly
         }
       );
@@ -59,7 +65,7 @@ const CourseProgress = ({ studentId, courseId, onProgressUpdate }) => {
       link.remove();
     } catch (error) {
       console.error("Error downloading certificate:", error);
-      alert("Certificate not available yet!");
+      alert("Certificate not available yet! Complete all modules and pass the final quiz.");
     }
   };
 
@@ -75,6 +81,12 @@ const CourseProgress = ({ studentId, courseId, onProgressUpdate }) => {
         ></div>
       </div>
       <p className="text-sm mb-4">Progress: {progress}%</p>
+      {progress < 100 && (
+        <div className="text-xs text-gray-600 mb-2">
+          <div>Modules: {Math.round((progress / 100) * 75)}% of 75%</div>
+          <div>Final Quiz: {Math.round((progress / 100) * 25)}% of 25%</div>
+        </div>
+      )}
 
       {/* Module-level progress with validation status */}
       <div className="mb-4">

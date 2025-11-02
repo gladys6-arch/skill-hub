@@ -4,6 +4,9 @@ import TeacherDashboard from '../pages/TeacherDashboard';
 import AddSkill from '../pages/AddSkill';
 import AddCourse from '../pages/AddCourse';
 import AddModule from '../pages/AddModule';
+import AddQuiz from '../pages/AddQuiz';
+import QuizResults from '../pages/QuizResults';
+import TeacherQuizzes from '../pages/TeacherQuizzes';
 import TeacherCourses from '../pages/TeacherCourses';
 import TeacherSkills from '../pages/TeacherSkills';
 import TeacherRequests from '../pages/TeacherRequests';
@@ -21,6 +24,9 @@ export default function TeacherRoutes() {
       <Route path="/add-skill" element={<AddSkill />} />
       <Route path="/add-course" element={<AddCourse />} />
       <Route path="/courses/:courseId/add-module" element={<AddModule />} />
+      <Route path="/courses/:courseId/add-quiz" element={<AddQuiz />} />
+      <Route path="/courses/:courseId/quiz-results" element={<QuizResults />} />
+      <Route path="/quizzes" element={<TeacherQuizzes />} />
       <Route path="/courses" element={<TeacherCourses />} />
       <Route path="/courses/:courseId/edit" element={<EditCourse />} />
       <Route path="/courses/:courseId/modules" element={<Modules />} />

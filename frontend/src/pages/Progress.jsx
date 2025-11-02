@@ -88,29 +88,43 @@ export default function Progress() {
   const downloadCertificate = async (item) => {
     try {
       const token = localStorage.getItem('token');
-      const endpoint = item.type === 'course' 
+      const endpoint = item.type === 'course'
         ? `http://127.0.0.1:5000/api/student/certificate/${item.id}`
         : `http://127.0.0.1:5000/api/student/skill-certificate/${item.id.replace('skill_', '')}`;
-      
+
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
+        // Get the filename from the Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `${item.title}_certificate.html`; // Default fallback
+
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${item.title}_certificate.pdf`;
+        a.download = filename.replace('.pdf', '.html');
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } else {
-        alert('Failed to download certificate');
+        const errorText = await response.text();
+        console.error('Certificate download failed:', response.status, errorText);
+        alert(`Failed to download certificate: ${response.status} ${response.statusText}`);
       }
     } catch (err) {
-      alert('Error downloading certificate');
+      console.error('Error downloading certificate:', err);
+      alert('Error downloading certificate: ' + err.message);
     }
   };
 
@@ -189,7 +203,7 @@ export default function Progress() {
                       
                       <div className="mt-auto">
                         <div className="d-grid gap-2">
-                          <button 
+                          <button
                             className={`btn ${item.completed ? 'btn-success' : 'btn-primary'}`}
                             onClick={() => handleStartCourse(item)}
                           >

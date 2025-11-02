@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext.jsx"; // use context
+import "./login.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -43,57 +44,60 @@ function Login() {
   };
 
   return (
-    <div className="form-container">
-      <h2>Login</h2>
-      <p className="form-description">Welcome back! Please sign in to your account.</p>
-      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+    <div className="login-page luxury-bg">
+      <div className="login-card">
+        <h1>Login</h1>
+        <p>Welcome back! Please sign in to your account.</p>
+        {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email:</label><br />
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password:</label><br />
-          <div style={{ position: 'relative' }}>
+        <form onSubmit={handleSubmit}>
+          <div>
             <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="Enter password"
+              placeholder="Email"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#666',
-                fontSize: '14px',
-                textDecoration: 'underline'
-              }}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
           </div>
-        </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <div>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#CFCAC2',
+                  fontSize: '14px',
+                  textDecoration: 'underline'
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          <div className="button-area">
+            <button type="submit" className="btn">Login</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

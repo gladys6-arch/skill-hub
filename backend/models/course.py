@@ -104,10 +104,13 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)  # For final course quizzes
     passing_score = db.Column(db.Integer, default=70)  # Percentage
+    is_final_quiz = db.Column(db.Boolean, default=False)  # Marks this as a final course assessment
 
     # Relationships
     module = db.relationship('Module', back_populates='quizzes')
+    course = db.relationship('Course', back_populates='final_quiz')
     questions = db.relationship('Question', back_populates='quiz', cascade="all, delete-orphan")
     attempts = db.relationship('QuizAttempt', back_populates='quiz', cascade="all, delete-orphan")
 
@@ -249,5 +252,8 @@ Module.time_requirement = db.relationship('ModuleTimeRequirement', back_populate
 Module.reading_sections = db.relationship('ReadingSection', back_populates='module', cascade="all, delete-orphan")
 Module.interactive_elements = db.relationship('InteractiveElement', back_populates='module', cascade="all, delete-orphan")
 Module.completion_criteria = db.relationship('ModuleCompletionCriteria', back_populates='module', cascade="all, delete-orphan")
+
+# Add final quiz relationship to Course
+Course.final_quiz = db.relationship('Quiz', back_populates='course', uselist=False, cascade="all, delete-orphan")
 
 

@@ -38,12 +38,18 @@ export default function TeacherCourses() {
                   <h5 className="card-title">{course.title}</h5>
                   <p className="card-text">{course.description}</p>
                   <p className="card-text"><strong>Price: ${course.price}</strong></p>
-                  <Link to={`/teacher/courses/${course.id}/modules`} className="btn btn-primary btn-sm me-2">
-                    Manage Modules
-                  </Link>
-                  <Link to={`/teacher/courses/${course.id}/edit`} className="btn btn-secondary btn-sm">
-                    Edit Course
-                  </Link>
+                  <div className="d-flex gap-2 flex-wrap">
+                    <Link to={`/teacher/courses/${course.id}/modules`} className="btn btn-primary btn-sm">
+                      Manage Modules
+                    </Link>
+                    <Link to={`/teacher/courses/${course.id}/add-quiz`} className="btn btn-warning btn-sm">
+                      <i className="fas fa-question-circle me-1"></i>
+                      Add Quiz
+                    </Link>
+                    <Link to={`/teacher/courses/${course.id}/edit`} className="btn btn-secondary btn-sm">
+                      Edit Course
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

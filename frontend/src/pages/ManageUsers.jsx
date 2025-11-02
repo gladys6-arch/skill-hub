@@ -111,19 +111,29 @@ export default function ManageUsers() {
                     </td>
                     <td className="align-middle">
                       <div className="btn-group" role="group">
-                        <Link 
-                          to={`/admin/${user.role}s/${user.id}/details`} 
+                        <Link
+                          to={`/admin/${user.role}s/${user.id}/details`}
                           className="btn btn-outline-primary btn-sm"
                           title="View Details"
                         >
                           <i className="fas fa-eye"></i>
                         </Link>
-                        <button 
-                          className="btn btn-outline-danger btn-sm" 
+                        {user.role === 'student' && (
+                          <Link
+                            to={`/admin/student-progress`}
+                            className="btn btn-outline-info btn-sm"
+                            title="View Student Progress"
+                          >
+                            <i className="fas fa-chart-line"></i>
+                          </Link>
+                        )}
+                        <button
+                          className="btn btn-outline-danger btn-sm"
                           onClick={() => removeUser(user.id)}
                           title="Delete User"
                         >
-                          <i className="fas fa-trash"></i>
+                          <i className="fas fa-trash me-1"></i>
+                          Delete
                         </button>
                       </div>
                     </td>

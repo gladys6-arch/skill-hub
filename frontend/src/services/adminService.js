@@ -64,3 +64,18 @@ export const getAdminRevenue = () => {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
+
+// -------------------- STUDENT PROGRESS TRACKING --------------------
+export const getAllStudentProgress = () => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/admin/student-progress`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const getStudentProgressDetail = (studentId) => {
+  const token = localStorage.getItem("token");
+  return axios.get(`${API_BASE_URL}/api/admin/students/${studentId}/progress`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

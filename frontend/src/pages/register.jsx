@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./register.css";
 
 function Register() {
   const navigate = useNavigate();
@@ -51,87 +52,87 @@ function Register() {
   };
 
   return (
-    <div className="form-container">
-      <h2>Register</h2>
-      <p className="form-description">Create your account to get started with Skill Hub.</p>
+    <div className="register-page luxury-bg">
+      <div className="register-card">
+        <h1>Register</h1>
+        <p>Create your account to get started with Skill Hub.</p>
 
-      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
-      {message && <p style={{ color: "green", marginBottom: "1rem" }}>{message}</p>}
+        {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+        {message && <p style={{ color: "green", marginBottom: "1rem" }}>{message}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="full_name">Full Name:</label><br />
-          <input
-            id="full_name"
-            type="text"
-            name="full_name"
-            value={formData.full_name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email">Email:</label><br />
-          <input
-            id="email"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password:</label><br />
-          <div style={{ position: 'relative' }}>
+        <form onSubmit={handleSubmit}>
+          <div>
             <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
+              id="full_name"
+              type="text"
+              name="full_name"
+              value={formData.full_name}
               onChange={handleChange}
               required
-              placeholder="Enter password"
+              placeholder="Full Name"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#666',
-                fontSize: '14px',
-                textDecoration: 'underline'
-              }}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
           </div>
-        </div>
 
-        <div className="role-selection">
-          <label htmlFor="role">Role:</label><br />
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-          </select>
-        </div>
+          <div>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder="Email"
+            />
+          </div>
 
-        <button type="submit">Register</button>
-      </form>
+          <div>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#CFCAC2',
+                  fontSize: '14px',
+                  textDecoration: 'underline'
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+            >
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+            </select>
+          </div>
+
+          <button type="submit" className="btn">Register</button>
+        </form>
+      </div>
     </div>
   );
 }

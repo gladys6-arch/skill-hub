@@ -55,7 +55,13 @@ export default function Modules() {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3>Manage Modules</h3>
-        <button className="btn btn-secondary" onClick={() => navigate('/teacher/courses')}>Back to Courses</button>
+        <div>
+          <button className="btn btn-primary me-2" onClick={() => navigate(`/teacher/courses/${courseId}/add-quiz`)}>
+            <i className="fas fa-plus me-1"></i>
+            Add Final Quiz
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate('/teacher/courses')}>Back to Courses</button>
+        </div>
       </div>
 
       <div className="row">

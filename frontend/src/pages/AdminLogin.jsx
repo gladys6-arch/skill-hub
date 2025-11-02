@@ -36,8 +36,8 @@ function AdminLogin() {
   };
 
   return (
-    <div className="form-container">
-      <h2>Admin Login</h2>
+    <div className="form-container glass-box section">
+      <h2 className="lux-accent">Admin Login</h2>
       <p className="form-description">Access the admin panel with your credentials.</p>
       {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
@@ -85,7 +85,7 @@ function AdminLogin() {
           </div>
         </div>
 
-        <button type="submit" className="btn">Admin Login</button>
+        <button type="submit" className="ghost-btn">Admin Login</button>
       </form>
     </div>
   );

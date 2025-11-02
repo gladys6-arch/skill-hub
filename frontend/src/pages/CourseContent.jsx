@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEnrolledCourseContent, markModuleCompleted, startTimeTracking, updateTimeTracking, getTimeTracking, getReadingSections, markReadingSectionComplete, getInteractiveElements } from '../services/studentService';
+import { getEnrolledCourseContent, markModuleCompleted, startTimeTracking, updateTimeTracking, getTimeTracking, getReadingSections, markReadingSectionComplete, getInteractiveElements, getFinalQuiz } from '../services/studentService';
 import QuizComponent from '../components/QuizComponent';
 import InteractiveElement from '../components/InteractiveElement';
+import FinalQuizComponent from '../components/FinalQuizComponent';
 
 export default function CourseContent() {
   const { courseId } = useParams();
@@ -469,7 +470,7 @@ export default function CourseContent() {
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="mb-0">
                           <i className="fas fa-brain me-2"></i>
-                          Module Quiz
+                          Final Course Assessment
                         </h5>
                         <button
                           className="btn btn-outline-secondary btn-sm"
@@ -479,8 +480,8 @@ export default function CourseContent() {
                           Close Quiz
                         </button>
                       </div>
-                      <QuizComponent
-                        moduleId={selectedModule.id}
+                      <FinalQuizComponent
+                        courseId={courseId}
                         onQuizComplete={handleQuizComplete}
                       />
                     </div>
@@ -513,31 +514,96 @@ export default function CourseContent() {
                         </div>
                       )}
 
-                      {/* Quiz Section */}
+                      {/* Mark as Read Section - for all modules */}
                       <div className="mt-4">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <h5 className="mb-0">
-                            <i className="fas fa-brain me-2"></i>
-                            Module Assessment
+                            <i className="fas fa-check-circle me-2"></i>
+                            Module Completion
                           </h5>
-                          {selectedModule.quiz_completed && (
+                          {selectedModule.completed && (
                             <span className="badge bg-success">
                               <i className="fas fa-check me-1"></i>
-                              Quiz Completed
+                              Completed
                             </span>
                           )}
                         </div>
 
-                        <div className="quiz-actions">
+                        <div className="completion-actions">
                           <button
-                            className="btn btn-primary"
-                            onClick={() => setShowQuiz(true)}
+                            className={`btn ${selectedModule.completed ? 'btn-success' : 'btn-primary'}`}
+                            onClick={() => handleMarkCompleted(selectedModule.id, !selectedModule.completed)}
+                            disabled={markingComplete}
                           >
-                            <i className="fas fa-play me-2"></i>
-                            {selectedModule.quiz_completed ? 'Retake Quiz' : 'Take Quiz'}
+                            {markingComplete ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <i className={`fas ${selectedModule.completed ? 'fa-undo' : 'fa-check'} me-2`}></i>
+                                {selectedModule.completed ? 'Mark as Incomplete' : 'Mark as Read'}
+                              </>
+                            )}
                           </button>
+                          <small className="text-muted d-block mt-2">
+                            <i className="fas fa-info-circle me-1"></i>
+                            Mark this module as read to update your course progress (75% total)
+                          </small>
                         </div>
                       </div>
+
+                      {/* Final Quiz Section - appears after all modules are completed */}
+                      {(() => {
+                        // Check if all modules are completed
+                        const allModulesCompleted = courseData.modules.every(module => module.completed);
+
+                        return allModulesCompleted ? (
+                          <div className="mt-4">
+                            <div className="card border-warning">
+                              <div className="card-header bg-warning text-dark">
+                                <h5 className="mb-0">
+                                  <i className="fas fa-trophy me-2"></i>
+                                  Final Course Assessment
+                                </h5>
+                              </div>
+                              <div className="card-body">
+                                <div className="alert alert-success">
+                                  <i className="fas fa-check-circle me-2"></i>
+                                  <strong>Congratulations!</strong> You've completed all course modules. Now take the final assessment to earn your certificate.
+                                </div>
+
+                                <div className="text-center">
+                                  <button
+                                    className="btn btn-warning btn-lg"
+                                    onClick={() => setShowQuiz(true)}
+                                  >
+                                    <i className="fas fa-play-circle me-2"></i>
+                                    Take Final Assessment
+                                  </button>
+                                  <p className="text-muted mt-2 mb-0">
+                                    <i className="fas fa-info-circle me-1"></i>
+                                    This assessment will test your understanding of the entire course. Passing score required for certification.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-4">
+                            <div className="card border-info">
+                              <div className="card-body text-center">
+                                <i className="fas fa-lock fa-2x text-info mb-2"></i>
+                                <h6 className="text-info">Final Assessment Locked</h6>
+                                <p className="text-muted mb-0">
+                                  Complete all course modules to unlock the final assessment and earn your certificate.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </>
                   )}
                 </div>

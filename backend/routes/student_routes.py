@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.decorators import role_required
 from models.course import Course, Enrollment, SkillEnrollment, Skill, Module, ModuleProgress
 from models import User
+from datetime import datetime
+import html
 
 student_bp = Blueprint('student_bp', __name__)
 
@@ -74,27 +76,55 @@ def get_profile():
 
 @student_bp.route('/courses', methods=['GET'])
 def get_courses():
-    # Get regular courses
+    from models.ratings import Rating
+    from models.reviews import Review
+
+    # Get regular courses with ratings
     courses = Course.query.all()
-    course_list = [{
-        'id': course.id,
-        'title': course.title,
-        'description': course.description,
-        'price': course.price,
-        'teacher_name': course.teacher.full_name if course.teacher else None
-    } for course in courses]
-    
-    # Get skills as courses
+    course_list = []
+    for course in courses:
+        # Calculate average rating and review count
+        ratings = Rating.query.filter_by(course_id=course.id).all()
+        reviews = Review.query.filter_by(course_id=course.id).all()
+
+        avg_rating = sum(r.score for r in ratings) / len(ratings) if ratings else 0
+        review_count = len(reviews)
+
+        course_list.append({
+            'id': course.id,
+            'title': course.title,
+            'description': course.description,
+            'price': course.price,
+            'teacher_name': course.teacher.full_name if course.teacher else None,
+            'average_rating': round(avg_rating, 1) if avg_rating > 0 else 0,
+            'rating_count': len(ratings),
+            'review_count': review_count,
+            'reviews': [{
+                'student_name': review.student.full_name,
+                'comment': review.comment,
+                'rating': next((r.score for r in ratings if r.student_id == review.student_id), None),
+                'created_at': review.date_created.strftime('%Y-%m-%d') if review.date_created else None
+            } for review in reviews[:3]]  # Show only first 3 reviews
+        })
+
+    # Get skills as courses with ratings
     from models.course import Skill
     skills = Skill.query.all()
-    skill_list = [{
-        'id': f"skill_{skill.id}",
-        'title': skill.name,
-        'description': skill.description,
-        'price': skill.price,
-        'teacher_name': skill.teacher.full_name if skill.teacher else None
-    } for skill in skills]
-    
+    skill_list = []
+    for skill in skills:
+        # Skills don't have ratings yet, but structure is ready
+        skill_list.append({
+            'id': f"skill_{skill.id}",
+            'title': skill.name,
+            'description': skill.description,
+            'price': skill.price,
+            'teacher_name': skill.teacher.full_name if skill.teacher else None,
+            'average_rating': 0,
+            'rating_count': 0,
+            'review_count': 0,
+            'reviews': []
+        })
+
     return jsonify(course_list + skill_list)
 
 
@@ -197,6 +227,7 @@ def enroll_skill():
     db.session.commit()
     return jsonify({"msg": "Enrolled in skill successfully"}), 201
 
+# Keep the old review endpoint for backward compatibility
 @student_bp.route('/review', methods=['POST'])
 @jwt_required()
 @role_required('student')
@@ -205,7 +236,7 @@ def add_review():
     identity = get_jwt_identity()
     user_id = identity if isinstance(identity, int) else identity.get('id')
     data = request.get_json()
-    
+
     review = Review(
         student_id=user_id,
         course_id=data['course_id'],
@@ -220,18 +251,100 @@ def add_review():
 @role_required('student')
 def add_rating():
     from models.ratings import Rating
+    from models.reviews import Review
     identity = get_jwt_identity()
     user_id = identity if isinstance(identity, int) else identity.get('id')
     data = request.get_json()
-    
-    rating = Rating(
-        student_id=user_id,
-        course_id=data['course_id'],
-        score=data['score']
-    )
-    db.session.add(rating)
+
+    # Check if rating already exists
+    existing_rating = Rating.query.filter_by(student_id=user_id, course_id=data['course_id']).first()
+
+    if existing_rating:
+        # Update existing rating
+        existing_rating.score = data['score']
+    else:
+        # Create new rating
+        existing_rating = Rating(
+            student_id=user_id,
+            course_id=data['course_id'],
+            score=data['score']
+        )
+        db.session.add(existing_rating)
+
+    # Handle review if provided
+    if 'review' in data and data['review'].strip():
+        existing_review = Review.query.filter_by(student_id=user_id, course_id=data['course_id']).first()
+        if existing_review:
+            existing_review.comment = data['review']
+        else:
+            review = Review(
+                student_id=user_id,
+                course_id=data['course_id'],
+                comment=data['review']
+            )
+            db.session.add(review)
+
     db.session.commit()
-    return jsonify({"msg": "Rating added successfully"}), 201
+    return jsonify({"msg": "Rating and review submitted successfully"}), 201
+
+@student_bp.route('/rate', methods=['PUT'])
+@jwt_required()
+@role_required('student')
+def update_rating():
+    from models.ratings import Rating
+    from models.reviews import Review
+    identity = get_jwt_identity()
+    user_id = identity if isinstance(identity, int) else identity.get('id')
+    data = request.get_json()
+
+    # Update rating
+    rating = Rating.query.filter_by(student_id=user_id, course_id=data['course_id']).first()
+    if rating:
+        rating.score = data['score']
+    else:
+        rating = Rating(
+            student_id=user_id,
+            course_id=data['course_id'],
+            score=data['score']
+        )
+        db.session.add(rating)
+
+    # Update review if provided
+    if 'review' in data and data['review'].strip():
+        review = Review.query.filter_by(student_id=user_id, course_id=data['course_id']).first()
+        if review:
+            review.comment = data['review']
+        else:
+            review = Review(
+                student_id=user_id,
+                course_id=data['course_id'],
+                comment=data['review']
+            )
+            db.session.add(review)
+
+    db.session.commit()
+    return jsonify({"msg": "Rating and review updated successfully"}), 200
+
+@student_bp.route('/course/<int:course_id>/rating', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_course_rating(course_id):
+    from models.ratings import Rating
+    from models.reviews import Review
+    identity = get_jwt_identity()
+    user_id = identity if isinstance(identity, int) else identity.get('id')
+
+    rating = Rating.query.filter_by(student_id=user_id, course_id=course_id).first()
+    review = Review.query.filter_by(student_id=user_id, course_id=course_id).first()
+
+    if rating:
+        return jsonify({
+            'score': rating.score,
+            'review': review.comment if review else None,
+            'created_at': rating.created_at.strftime('%Y-%m-%d %H:%M') if rating.created_at else None
+        })
+    else:
+        return jsonify(None)
 
 @student_bp.route('/certificate/<int:course_id>', methods=['GET'])
 @jwt_required()
@@ -241,17 +354,57 @@ def get_certificate(course_id):
     from utils.certificate_generator import save_certificate
     from flask import send_file
     import os
-    
+
     identity = get_jwt_identity()
     user_id = identity if isinstance(identity, int) else identity.get('id')
-    
-    enrollment = Enrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
-    if not enrollment or not enrollment.completed:
-        return jsonify({"msg": "Course not completed"}), 400
-    
+
+    # Check if course is 100% completed (both modules and final quiz)
+    from models.course import Quiz, QuizAttempt
+
+    # Check if all modules are completed
+    total_modules = Module.query.filter_by(course_id=course_id).count()
+    completed_modules = ModuleProgress.query.filter_by(
+        student_id=user_id,
+        completed=True
+    ).join(Module).filter(Module.course_id == course_id).count()
+
+    modules_completed = total_modules > 0 and completed_modules == total_modules
+
+    # Check if final quiz is passed (if exists)
+    final_quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    quiz_passed = True  # Default to true if no quiz exists
+
+    if final_quiz:
+        attempt = QuizAttempt.query.filter_by(
+            student_id=user_id,
+            quiz_id=final_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+
+        if attempt and attempt.score is not None:
+            quiz_passed = attempt.score >= final_quiz.passing_score
+        else:
+            quiz_passed = False  # Quiz exists but not attempted
+
+    # Only allow certificate if both conditions are met
+    if not (modules_completed and quiz_passed):
+        return jsonify({
+            "msg": "Certificate not available. Complete all modules and pass the final quiz first.",
+            "modules_completed": modules_completed,
+            "quiz_passed": quiz_passed
+        }), 400
+
     course = Course.query.get(course_id)
     user = User.query.get(user_id)
-    
+
+    # Calculate completed modules count and total modules
+    from models.course import ModuleProgress
+    completed_modules_count = ModuleProgress.query.filter_by(
+        student_id=user_id,
+        completed=True
+    ).join(Module).filter(Module.course_id == course_id).count()
+
+    total_modules = Module.query.filter_by(course_id=course_id).count()
+
     cert = Certificate.query.filter_by(student_id=user_id, course_id=course_id).first()
     if not cert:
         file_path = f"certificates/cert_{user_id}_{course_id}.pdf"
@@ -262,17 +415,80 @@ def get_certificate(course_id):
         )
         db.session.add(cert)
         db.session.commit()
-        
-        # Generate the actual certificate file
+
+        # Generate the actual certificate file with enhanced content
         full_path = os.path.join(os.getcwd(), file_path)
-        save_certificate(user.full_name, course.title, full_path, "course")
-    
+
+        completed_modules_text = f"{completed_modules_count}/{total_modules} Modules"
+
+        save_certificate(
+            student_name=user.full_name,
+            course_title=course.title,
+            file_path=full_path,
+            cert_type="course",
+            student_username=user.email.split('@')[0],  # Use email prefix as username
+            completed_modules=completed_modules_text
+        )
+
     # Return file for download
     full_path = os.path.join(os.getcwd(), cert.file_path)
     if not os.path.exists(full_path):
-        save_certificate(user.full_name, course.title, full_path, "course")
-    
-    return send_file(full_path, as_attachment=True, download_name=f"{course.title}_certificate.pdf")
+        # Regenerate with enhanced content if file doesn't exist
+        completed_modules_text = f"{completed_modules_count}/{total_modules} Modules"
+
+        save_certificate(
+            student_name=user.full_name,
+            course_title=course.title,
+            file_path=full_path,
+            cert_type="course",
+            student_username=user.email.split('@')[0],
+            completed_modules=completed_modules_text
+        )
+
+    # Generate HTML certificate using template
+    certificate_id = f"SS-{datetime.now().strftime('%Y%m%d')}-{hash(user.full_name + course.title) % 10000:04d}"
+    completion_date = datetime.now().strftime('%B %d, %Y')
+
+    # Determine final assessment status
+    final_assessment = "PASSED"
+    if final_quiz:
+        attempt = QuizAttempt.query.filter_by(
+            student_id=user_id,
+            quiz_id=final_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+        if attempt and attempt.score is not None:
+            final_assessment = f"PASSED ({attempt.score}%)" if attempt.score >= final_quiz.passing_score else f"FAILED ({attempt.score}%)"
+        else:
+            final_assessment = "NOT ATTEMPTED"
+
+    html_content = render_template('certificate.html',
+        certificate_id=certificate_id,
+        student_name=html.escape(user.full_name),
+        username=html.escape(user.email.split('@')[0]),
+        course_title=html.escape(course.title),
+        course_type="Course",
+        modules_completed=f"{completed_modules_count}/{total_modules} Modules",
+        final_assessment=final_assessment,
+        completion_date=completion_date
+    )
+
+    from flask import Response
+    # Sanitize filename to remove special characters that might cause issues
+    safe_filename = "".join(c for c in course.title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    filename = f"{safe_filename}_certificate.html"
+
+    response = Response(
+        html_content,
+        mimetype='text/html; charset=utf-8',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Access-Control-Allow-Origin': 'http://localhost:5173',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+        }
+    )
+    return response
 
 @student_bp.route('/skill-certificate/<int:skill_id>', methods=['GET'])
 @jwt_required()
@@ -371,6 +587,7 @@ def start_skill(skill_id):
 @jwt_required()
 @role_required('student')
 def get_enrolled_course_content(course_id):
+    from models.course import Quiz, QuizAttempt
     identity = get_jwt_identity()
     student_id = identity if isinstance(identity, int) else identity.get('id')
 
@@ -396,6 +613,28 @@ def get_enrolled_course_content(course_id):
     completed_modules = sum(1 for mp in module_progress.values() if mp['completed'])
     progress_percentage = int((completed_modules / total_modules) * 100) if total_modules > 0 else 0
 
+    # Check final quiz status
+    final_quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    quiz_status = None
+    if final_quiz:
+        attempt = QuizAttempt.query.filter_by(
+            student_id=student_id,
+            quiz_id=final_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+
+        if attempt and attempt.score is not None:
+            quiz_status = {
+                'attempted': True,
+                'score': attempt.score,
+                'passed': attempt.score >= final_quiz.passing_score,
+                'passing_score': final_quiz.passing_score
+            }
+        else:
+            quiz_status = {
+                'attempted': False,
+                'passing_score': final_quiz.passing_score
+            }
+
     return jsonify({
         'course': {
             'id': course.id,
@@ -411,7 +650,8 @@ def get_enrolled_course_content(course_id):
             'completed_at': module_progress.get(m.id, {}).get('completed_at')
         } for m in modules],
         'progress': progress_percentage,
-        'completed': progress_percentage >= 100
+        'completed': progress_percentage >= 100,
+        'final_quiz': quiz_status
     })
 
 @student_bp.route('/sessions', methods=['GET'])
@@ -491,3 +731,148 @@ def request_session():
     db.session.commit()
 
     return jsonify({'message': 'Session request sent successfully'}), 201
+
+# Final Quiz Taking for Students
+@student_bp.route('/courses/<int:course_id>/final-quiz', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_final_quiz(course_id):
+    from models.course import Quiz, QuizAttempt
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+
+    # Check if student is enrolled
+    enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+    if not enrollment:
+        return jsonify({'message': 'Not enrolled in this course'}), 403
+
+    # Check if all modules are completed
+    total_modules = Module.query.filter_by(course_id=course_id).count()
+    completed_modules = ModuleProgress.query.filter_by(
+        student_id=student_id,
+        completed=True
+    ).join(Module).filter(Module.course_id == course_id).count()
+
+    if total_modules > 0 and completed_modules < total_modules:
+        return jsonify({
+            'message': 'Complete all modules before taking the final quiz',
+            'modules_completed': completed_modules,
+            'total_modules': total_modules
+        }), 400
+
+    quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    if not quiz:
+        return jsonify({'message': 'No final quiz available for this course'}), 404
+
+    # Check if already attempted
+    existing_attempt = QuizAttempt.query.filter_by(
+        student_id=student_id,
+        quiz_id=quiz.id
+    ).first()
+
+    if existing_attempt and existing_attempt.completed_at:
+        return jsonify({
+            'message': 'Quiz already completed',
+            'score': existing_attempt.score,
+            'passed': existing_attempt.score >= quiz.passing_score if existing_attempt.score else False
+        }), 400
+
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
+    questions_data = []
+    for question in questions:
+        answers = Answer.query.filter_by(question_id=question.id).all()
+        questions_data.append({
+            'id': question.id,
+            'question_text': question.question_text,
+            'question_type': question.question_type,
+            'answers': [{
+                'id': answer.id,
+                'answer_text': answer.answer_text
+            } for answer in answers]
+        })
+
+    return jsonify({
+        'quiz_id': quiz.id,
+        'title': quiz.title,
+        'passing_score': quiz.passing_score,
+        'questions': questions_data,
+        'time_limit': None  # Could add time limits later
+    })
+
+@student_bp.route('/quizzes/<int:quiz_id>/submit', methods=['POST'])
+@jwt_required()
+@role_required('student')
+def submit_quiz_attempt(quiz_id):
+    from models.course import Quiz, QuizAttempt, QuizResponse
+    data = request.get_json()
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+
+    quiz = Quiz.query.get_or_404(quiz_id)
+    if quiz.is_final_quiz and quiz.course_id:
+        # Verify student is enrolled
+        enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=quiz.course_id).first()
+        if not enrollment:
+            return jsonify({'message': 'Not enrolled in this course'}), 403
+
+    # Check if already attempted
+    existing_attempt = QuizAttempt.query.filter_by(
+        student_id=student_id,
+        quiz_id=quiz_id
+    ).first()
+
+    if existing_attempt and existing_attempt.completed_at:
+        return jsonify({'message': 'Quiz already completed'}), 400
+
+    # Create or update attempt
+    if not existing_attempt:
+        existing_attempt = QuizAttempt(
+            student_id=student_id,
+            quiz_id=quiz_id,
+            started_at=datetime.now()
+        )
+        db.session.add(existing_attempt)
+        db.session.commit()
+
+    # Calculate score
+    total_questions = len(quiz.questions)
+    correct_answers = 0
+    responses_data = []
+
+    for response_data in data.get('responses', []):
+        question = Question.query.get(response_data['question_id'])
+        if question:
+            selected_answer = Answer.query.get(response_data['selected_answer_id']) if response_data.get('selected_answer_id') else None
+
+            # Create response record
+            response = QuizResponse(
+                attempt_id=existing_attempt.id,
+                question_id=question.id,
+                selected_answer_id=selected_answer.id if selected_answer else None,
+                response_text=response_data.get('response_text')
+            )
+            db.session.add(response)
+            responses_data.append(response)
+
+            # Check if answer is correct
+            if selected_answer and selected_answer.is_correct:
+                correct_answers += 1
+
+    # Calculate percentage score
+    score_percentage = int((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+
+    # Update attempt
+    existing_attempt.completed_at = datetime.now()
+    existing_attempt.score = score_percentage
+    db.session.commit()
+
+    passed = score_percentage >= quiz.passing_score
+
+    return jsonify({
+        'message': 'Quiz submitted successfully',
+        'score': score_percentage,
+        'passed': passed,
+        'total_questions': total_questions,
+        'correct_answers': correct_answers,
+        'passing_score': quiz.passing_score
+    }), 200

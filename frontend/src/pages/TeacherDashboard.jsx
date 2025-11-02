@@ -83,61 +83,77 @@ export default function TeacherDashboard() {
   }, []);
 
   if (loading) return (
-    <div className="container mt-4">
+    <div className="container section" style={{ marginTop: '120px', textAlign: 'center' }}>
       <div className="d-flex justify-content-center">
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border text-warning" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
-      <p className="text-center mt-2">Loading dashboard data...</p>
+      <p className="text-center mt-2 lux-accent">Loading dashboard data...</p>
     </div>
   );
 
   if (error) return (
-    <div className="container mt-4">
-      <div className="alert alert-danger" role="alert">
-        <h4 className="alert-heading">Error Loading Dashboard</h4>
-        <p>{error}</p>
-        <hr />
-        <p className="mb-0">Please try refreshing the page or contact support if the problem persists.</p>
+    <div className="container section" style={{ marginTop: '120px' }}>
+      <div className="card" style={{ borderColor: '#dc3545' }}>
+        <div className="card-body">
+          <h4 className="card-title text-danger">Error Loading Dashboard</h4>
+          <p>{error}</p>
+          <hr />
+          <p className="mb-0">Please try refreshing the page or contact support if the problem persists.</p>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="container mt-4">
-      <Link to="/" className="back-button">Back to Home</Link>
-      <h3>Teacher Dashboard</h3>
+    <div className="container section" style={{ marginTop: '120px' }}>
+      <Link to="/" className="site-button" style={{ marginBottom: '20px', display: 'inline-block' }}>Back to Home</Link>
+      <h3 className="lux-accent" style={{ marginBottom: '30px' }}>Teacher Dashboard</h3>
 
       {/* Notification for pending requests */}
       {showNotification && (
-        <div className="alert alert-info alert-dismissible fade show" role="alert">
-          <strong>📚 New Study Session Request!</strong> You have {pendingRequests.length} pending student request{pendingRequests.length > 1 ? 's' : ''} for study sessions.
-          <Link to="/teacher/requests" className="alert-link ms-2">View Requests</Link>
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => setShowNotification(false)}
-            aria-label="Close"
-          ></button>
+        <div className="card mb-4" style={{ borderColor: '#17a2b8', background: 'rgba(23,162,184,0.1)' }}>
+          <div className="card-body">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <strong className="lux-accent">📚 New Study Session Request!</strong>
+                <p className="mb-0 mt-1">You have {pendingRequests.length} pending student request{pendingRequests.length > 1 ? 's' : ''} for study sessions.</p>
+              </div>
+              <div>
+                <Link to="/teacher/requests" className="site-button me-2">View Requests</Link>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowNotification(false)}
+                  aria-label="Close"
+                  style={{ filter: 'invert(1)' }}
+                ></button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* <div className="mb-4">
+      <div className="mb-4">
         <Link to="/teacher/add-skill" className="btn btn-primary me-2">Add New Skill</Link>
         <Link to="/teacher/add-course" className="btn btn-success me-2">Add New Course</Link>
-        <Link to="/teacher/requests" className="btn btn-warning me-2">Student Requests</Link>
-        <Link to="/teacher/sessions" className="btn btn-info me-2">Chat Sessions</Link>
-        <Link to="/teacher/balance" className="btn btn-secondary me-2">View Balance</Link>
-        <Link to="/teacher/subscription" className="btn btn-dark">View Subscription</Link>
-      </div> */}
+        <Link to="/teacher/quizzes" className="btn btn-warning me-2">
+          <i className="fas fa-question-circle me-1"></i>
+          My Quizzes
+        </Link>
+        <Link to="/teacher/requests" className="btn btn-info me-2">Student Requests</Link>
+        <Link to="/teacher/sessions" className="btn btn-secondary me-2">Chat Sessions</Link>
+        <Link to="/teacher/balance" className="btn btn-dark me-2">View Balance</Link>
+        <Link to="/teacher/subscription" className="btn btn-outline-primary">View Subscription</Link>
+      </div>
 
       {/* Student Progress Metrics */}
       <div className="row mb-4">
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">{metrics.uniqueStudents}</h5>
+              <h5 className="card-title lux-accent">{metrics.uniqueStudents}</h5>
               <p className="card-text">Enrolled Students</p>
             </div>
           </div>
@@ -145,7 +161,7 @@ export default function TeacherDashboard() {
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">{metrics.totalEnrollments}</h5>
+              <h5 className="card-title lux-accent">{metrics.totalEnrollments}</h5>
               <p className="card-text">Total Enrollments</p>
             </div>
           </div>
@@ -153,7 +169,7 @@ export default function TeacherDashboard() {
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">{metrics.completionRate}%</h5>
+              <h5 className="card-title lux-accent">{metrics.completionRate}%</h5>
               <p className="card-text">Overall Completion Rate</p>
             </div>
           </div>
@@ -161,7 +177,7 @@ export default function TeacherDashboard() {
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">{metrics.averageProgress}%</h5>
+              <h5 className="card-title lux-accent">{metrics.averageProgress}%</h5>
               <p className="card-text">Average Progress</p>
             </div>
           </div>
@@ -171,7 +187,7 @@ export default function TeacherDashboard() {
       {/* Charts Section */}
       <div className="row mb-4">
         <div className="col-md-6">
-          <h5>Completion Status</h5>
+          <h5 className="lux-accent">Completion Status</h5>
           <PieChart width={400} height={300}>
             <Pie
               data={completionData}
@@ -191,7 +207,7 @@ export default function TeacherDashboard() {
           </PieChart>
         </div>
         <div className="col-md-6">
-          <h5>Enrollments by Type</h5>
+          <h5 className="lux-accent">Enrollments by Type</h5>
           <BarChart width={400} height={300} data={typeData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
@@ -206,7 +222,7 @@ export default function TeacherDashboard() {
       {/* Detailed Progress Table */}
       <div className="row mb-4">
         <div className="col-12">
-          <h5>Detailed Student Progress</h5>
+          <h5 className="lux-accent">Detailed Student Progress</h5>
           {progress.length > 0 ? (
             <div className="table-responsive">
               <table className="table table-striped">
@@ -262,7 +278,7 @@ export default function TeacherDashboard() {
       {/* My Courses Section */}
       <div className="row">
         <div className="col-md-6">
-          <h5>My Courses</h5>
+          <h5 className="lux-accent">My Courses</h5>
           {courses.length > 0 ? (
             <ul className="list-group">
               {courses.map((course) => (
@@ -271,6 +287,10 @@ export default function TeacherDashboard() {
                   <div>
                     <Link to={`/teacher/courses/${course.id}/add-module`} className="btn btn-sm btn-primary me-2">
                       Add Module
+                    </Link>
+                    <Link to={`/teacher/courses/${course.id}/add-quiz`} className="btn btn-sm btn-warning me-2">
+                      <i className="fas fa-question-circle me-1"></i>
+                      Add Quiz
                     </Link>
                     <Link to={`/teacher/courses/${course.id}/edit`} className="btn btn-sm btn-secondary">
                       Edit
@@ -287,7 +307,7 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="col-md-6">
-          <h5>Completion Rates by Type</h5>
+          <h5 className="lux-accent">Completion Rates by Type</h5>
           <div className="card">
             <div className="card-body">
               <p><strong>Courses:</strong> {metrics.courseCompletionRate}% completion rate ({metrics.courseEnrollments} enrollments)</p>

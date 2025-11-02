@@ -8,8 +8,10 @@ class Payment(db.Model):
    amount = db.Column(db.Float)
    teacher_share = db.Column(db.Float)
    admin_share = db.Column(db.Float)
-   status = db.Column(db.String(20), default = 'paid')
+   status = db.Column(db.String(20), default = 'pending')
    payment_type = db.Column(db.String(20))
+   checkout_request_id = db.Column(db.String(100), nullable=True)
+   merchant_request_id = db.Column(db.String(100), nullable=True)
 
    #relationships
    student = db.relationship('User', back_populates='payments')

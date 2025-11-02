@@ -145,7 +145,7 @@ def get_course_progress(course_id):
     if not enrollment:
         return jsonify({"msg": "Not enrolled"}), 404
 
-    # Calculate progress automatically from ModuleProgress with validation
+    # Calculate progress: 75% from modules, 25% from final quiz
     modules = Module.query.filter_by(course_id=course_id).all()
     total_modules = len(modules)
     validated_completed_modules = 0
@@ -155,9 +155,44 @@ def get_course_progress(course_id):
         if validation_result['completed']:
             validated_completed_modules += 1
 
-    # Each module contributes equally to overall progress
-    module_contribution = 100 / total_modules if total_modules > 0 else 0
-    progress_percentage = int(validated_completed_modules * module_contribution)
+    # Modules contribute 75% of total progress - only count modules that are NOT the final module
+    # Final module completion is handled separately and doesn't contribute to the 75%
+    non_final_modules = total_modules - 1 if total_modules > 0 else 0
+    validated_completed_non_final_modules = 0
+
+    for i, module in enumerate(modules):
+        if i < total_modules - 1:  # Not the final module
+            validation_result = calculate_module_progress(user_id, module.id)
+            if validation_result['completed']:
+                validated_completed_non_final_modules += 1
+
+    module_progress_percentage = (validated_completed_non_final_modules / non_final_modules * 75) if non_final_modules > 0 else 0
+
+    # Check final quiz completion (25% of progress)
+    quiz_progress_percentage = 0
+    course_quiz = None
+
+    # Find the final quiz (assuming it's the last module's quiz or a course-level quiz)
+    if modules:
+        # Check if there's a quiz in the last module
+        last_module = modules[-1]
+        course_quiz = Quiz.query.filter_by(module_id=last_module.id).first()
+
+    if course_quiz:
+        # Check if student has passed the final quiz
+        final_attempt = QuizAttempt.query.filter_by(
+            student_id=user_id, quiz_id=course_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+
+        if final_attempt and final_attempt.completed_at and final_attempt.score >= course_quiz.passing_score:
+            quiz_progress_percentage = 25  # Full 25% for passing the final quiz
+
+    # Total progress is sum of module progress (75%) + quiz progress (25%)
+    total_progress_percentage = int(module_progress_percentage + quiz_progress_percentage)
+
+    # Course is completed only when both modules (75%) and quiz (25%) are done
+    course_completed = total_progress_percentage >= 100
+
     current_module = validated_completed_modules + 1 if validated_completed_modules < total_modules else total_modules
 
     return jsonify({
@@ -165,10 +200,74 @@ def get_course_progress(course_id):
         "current_module": current_module,
         "total_modules": total_modules,
         "progress_text": f"{current_module}/{total_modules}",
-        "overall_progress": progress_percentage,
-        "completed": progress_percentage >= 100,
-        "validated_completed_modules": validated_completed_modules
+        "module_progress": int(module_progress_percentage),
+        "quiz_progress": int(quiz_progress_percentage),
+        "overall_progress": total_progress_percentage,
+        "completed": course_completed,
+        "validated_completed_modules": validated_completed_modules,
+        "final_quiz_passed": quiz_progress_percentage == 25
     })
+
+def calculate_course_progress_percentage(student_id, course_id):
+    """Helper function to calculate course progress for certificate validation"""
+    enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+    if not enrollment:
+        return {'completed': False, 'progress': 0}
+
+    # Calculate progress: 75% from modules, 25% from final quiz
+    modules = Module.query.filter_by(course_id=course_id).all()
+    total_modules = len(modules)
+    validated_completed_modules = 0
+
+    for module in modules:
+        validation_result = calculate_module_progress(student_id, module.id)
+        if validation_result['completed']:
+            validated_completed_modules += 1
+
+    # Modules contribute 75% of total progress - only count modules that are NOT the final module
+    # Final module completion is handled separately and doesn't contribute to the 75%
+    non_final_modules = total_modules - 1 if total_modules > 0 else 0
+    validated_completed_non_final_modules = 0
+
+    for i, module in enumerate(modules):
+        if i < total_modules - 1:  # Not the final module
+            validation_result = calculate_module_progress(student_id, module.id)
+            if validation_result['completed']:
+                validated_completed_non_final_modules += 1
+
+    module_progress_percentage = (validated_completed_non_final_modules / non_final_modules * 75) if non_final_modules > 0 else 0
+
+    # Check final quiz completion (25% of progress)
+    quiz_progress_percentage = 0
+    course_quiz = None
+
+    # Find the final quiz (assuming it's the last module's quiz or a course-level quiz)
+    if modules:
+        # Check if there's a quiz in the last module
+        last_module = modules[-1]
+        course_quiz = Quiz.query.filter_by(module_id=last_module.id).first()
+
+    if course_quiz:
+        # Check if student has passed the final quiz
+        final_attempt = QuizAttempt.query.filter_by(
+            student_id=student_id, quiz_id=course_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+
+        if final_attempt and final_attempt.completed_at and final_attempt.score >= course_quiz.passing_score:
+            quiz_progress_percentage = 25  # Full 25% for passing the final quiz
+
+    # Total progress is sum of module progress (75%) + quiz progress (25%)
+    total_progress_percentage = int(module_progress_percentage + quiz_progress_percentage)
+
+    # Course is completed only when both modules (75%) and quiz (25%) are done
+    course_completed = total_progress_percentage >= 100
+
+    return {
+        'completed': course_completed,
+        'progress': total_progress_percentage,
+        'module_progress': int(module_progress_percentage),
+        'quiz_progress': int(quiz_progress_percentage)
+    }
 
 @student_progress_bp.route('/modules/<int:module_id>/progress', methods=['POST'])
 @jwt_required()

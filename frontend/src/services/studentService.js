@@ -9,8 +9,16 @@ export const getCourses = () => axios.get(`${API_BASE_URL}/api/student/courses`)
 
 export const enrollInCourse = (courseId) => {
   const token = localStorage.getItem("token");
-  return axios.post(`${API_BASE_URL}/api/student/enroll`, 
-    { course_id: courseId }, 
+  return axios.post(`${API_BASE_URL}/api/student/enroll`,
+    { course_id: courseId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
+export const payForCourse = (courseId, phoneNumber) => {
+  const token = localStorage.getItem("token");
+  return axios.post(`${API_BASE_URL}/api/payment/payment/pay`,
+    { course_id: courseId, phone_number: phoneNumber },
     { headers: { Authorization: `Bearer ${token}` } }
   );
 };
@@ -70,6 +78,15 @@ export const submitQuizAttempt = (attemptId, responses) => {
 
 export const getQuizResults = (attemptId) => {
   return axios.get(`${API_BASE_URL}/api/student/quiz-attempts/${attemptId}/results`, getAuthHeaders());
+};
+
+// Final Quiz functions
+export const getFinalQuiz = (courseId) => {
+  return axios.get(`${API_BASE_URL}/api/student/courses/${courseId}/final-quiz`, getAuthHeaders());
+};
+
+export const submitFinalQuizAttempt = (quizId, responses) => {
+  return axios.post(`${API_BASE_URL}/api/student/quizzes/${quizId}/submit`, { responses }, getAuthHeaders());
 };
 
 // Interactive Elements functions
