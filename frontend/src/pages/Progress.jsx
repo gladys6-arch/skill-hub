@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../api';
 
 const ProgressBar = ({ progress }) => {
   const getColor = (progress) => {
@@ -43,7 +44,7 @@ export default function Progress() {
     const fetchProgress = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://127.0.0.1:5000/api/student/my-progress', {
+        const res = await axios.get(`${API_BASE_URL}/api/student/my-progress`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setEnrollments(res.data);
@@ -60,7 +61,7 @@ export default function Progress() {
   const updateProgress = async (id, newProgress) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://127.0.0.1:5000/api/student/update-my-progress', 
+      await axios.put(`${API_BASE_URL}/api/student/update-my-progress`, 
         { id, progress: newProgress },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -91,8 +92,8 @@ export default function Progress() {
     try {
       const token = localStorage.getItem('token');
       const endpoint = item.type === 'course'
-        ? `http://127.0.0.1:5000/api/student/certificate/${item.id}`
-        : `http://127.0.0.1:5000/api/student/skill-certificate/${item.id.replace('skill_', '')}`;
+        ? `${API_BASE_URL}/api/student/certificate/${item.id}`
+        : `${API_BASE_URL}/api/student/skill-certificate/${item.id.replace('skill_', '')}`;
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
