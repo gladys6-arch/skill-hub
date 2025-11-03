@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../api";
 
 function CourseReview({ courseId }) {
   const [reviews, setReviews] = useState([]);
@@ -8,7 +9,7 @@ function CourseReview({ courseId }) {
 
   useEffect(() => {
     if (!courseId) return;
-    fetch(`http://127.0.0.1:5000/api/courses/${courseId}/reviews`)
+    fetch(`${API_BASE_URL}/api/courses/${courseId}/reviews`)
       .then((res) => res.json())
       .then((data) => setReviews(data))
       .catch((err) => console.error("Error fetching reviews:", err));
@@ -20,7 +21,7 @@ function CourseReview({ courseId }) {
 
     const token = localStorage.getItem("token");
     setLoading(true);
-    fetch(`http://127.0.0.1:5000/api/courses/${courseId}/reviews`, {
+    fetch(`${API_BASE_URL}/api/courses/${courseId}/reviews`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
