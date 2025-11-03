@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCourses, enrollInCourse, enrollInSkill, payForCourse } from "../services/studentService";
 import axios from "axios";
+import { API_BASE_URL } from "../api";
 
 export default function AvailableCourses() {
   const [courses, setCourses] = useState([]);
@@ -23,7 +24,7 @@ export default function AvailableCourses() {
   const fetchEnrollments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://127.0.0.1:5000/api/student/my-progress', {
+      const res = await axios.get(`${API_BASE_URL}/api/student/my-progress`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setEnrollments(res.data);
@@ -81,7 +82,7 @@ export default function AvailableCourses() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://127.0.0.1:5000/api/payment/manual-enroll',
+        `${API_BASE_URL}/api/payment/manual-enroll`,
         { course_id: courseId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
