@@ -35,7 +35,7 @@ export default function TeacherQuizzes() {
 
   if (loading) {
     return (
-      <div className="container mt-4" style={{ marginTop: '120px' }}>
+      <div className="container" style={{ marginTop: '150px' }}>
         <div className="d-flex justify-content-center">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading quizzes...</span>
@@ -46,7 +46,7 @@ export default function TeacherQuizzes() {
   }
 
   return (
-    <div className="container mt-4" style={{ marginTop: '120px' }}>
+    <div className="container" style={{ marginTop: '150px' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="mb-1">My Quizzes</h2>

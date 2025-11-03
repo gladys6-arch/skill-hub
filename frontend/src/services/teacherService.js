@@ -65,7 +65,7 @@ export const getMySkills = () => {
 
 export const addSkill = (skillData) => {
   const token = localStorage.getItem("token");
-  return axios.post(`${API_BASE_URL}/api/teacher/skills`, skillData, {
+  return axios.post(`${API_BASE_URL}/api/teacher/add-skill`, skillData, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

@@ -129,7 +129,15 @@ export default function AvailableCourses() {
   );
 
   return (
-    <div className="courses-section">
+    <div className="courses-section" style={{ marginTop: '120px' }}>
+      <button 
+        className="btn btn-outline-primary mb-3"
+        onClick={() => navigate('/student/dashboard')}
+        style={{ marginBottom: '20px' }}
+      >
+        <i className="fas fa-arrow-left me-1"></i>
+        Back to Dashboard
+      </button>
       <h1 className="section-title lux-accent">Available Courses</h1>
 
       {courses.length === 0 ? (
@@ -154,52 +162,25 @@ export default function AvailableCourses() {
 
                 {/* Rating Display */}
                 {course.average_rating > 0 && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span
-                          key={star}
-                          style={{
-                            color: star <= course.average_rating ? '#ffc107' : '#e9ecef',
-                            fontSize: '16px',
-                            marginRight: '2px'
-                          }}
-                        >
-                          ★
-                        </span>
-                      ))}
-                      <span style={{ color: '#C7A76E', fontSize: '14px', marginLeft: '8px' }}>
-                        {course.average_rating} ({course.rating_count} reviews)
+                  <p style={{ color: '#C7A76E', fontSize: '14px', marginBottom: '15px' }}>
+                    <strong>Rating:</strong> 
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        style={{
+                          color: star <= course.average_rating ? '#ffc107' : '#e9ecef',
+                          fontSize: '16px',
+                          marginLeft: '5px',
+                          marginRight: '2px'
+                        }}
+                      >
+                        ★
                       </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reviews Preview */}
-                {course.reviews && course.reviews.length > 0 && (
-                  <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'rgba(199,167,110,0.1)', borderRadius: '5px' }}>
-                    <small style={{ color: '#C7A76E', fontWeight: 'bold' }}>Recent Reviews:</small>
-                    {course.reviews.slice(0, 2).map((review, index) => (
-                      <div key={index} style={{ marginTop: '5px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
-                          <small style={{ color: '#fff', fontWeight: 'bold' }}>{review.student_name}:</small>
-                          {review.rating && (
-                            <small style={{ color: '#ffc107', marginLeft: '5px' }}>
-                              {'★'.repeat(review.rating)}
-                            </small>
-                          )}
-                        </div>
-                        <small style={{ color: '#ccc' }}>
-                          "{review.comment.length > 60 ? review.comment.substring(0, 60) + '...' : review.comment}"
-                        </small>
-                      </div>
                     ))}
-                    {course.reviews.length > 2 && (
-                      <small style={{ color: '#C7A76E', fontStyle: 'italic' }}>
-                        +{course.reviews.length - 2} more reviews
-                      </small>
-                    )}
-                  </div>
+                    <span style={{ marginLeft: '8px' }}>
+                      {course.average_rating} ({course.rating_count} reviews)
+                    </span>
+                  </p>
                 )}
 
                 <p style={{ color: '#C7A76E', fontSize: '14px', marginBottom: '15px' }}>

@@ -83,8 +83,7 @@ export default function Progress() {
     if (item.type === 'course') {
       navigate(`/student/course/${item.id}/content`);
     } else if (item.type === 'skill') {
-      const skillId = item.id.replace('skill_', '');
-      navigate(`/student/course/${skillId}/content`);
+      alert('Skill content is not yet available. This feature is coming soon!');
     }
   };
 
@@ -136,7 +135,7 @@ export default function Progress() {
 
   if (loading) {
     return (
-      <div className="container mt-5">
+      <div className="container" style={{ marginTop: '150px' }}>
         <div className="d-flex justify-content-center">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -147,9 +146,16 @@ export default function Progress() {
   }
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <div className="row">
         <div className="col-12">
+          <button 
+            className="btn btn-outline-primary mb-3"
+            onClick={() => navigate('/student/dashboard')}
+          >
+            <i className="fas fa-arrow-left me-1"></i>
+            Back to Dashboard
+          </button>
           <div className="d-flex align-items-center mb-4">
             <h2 className="mb-0 me-3">My Learning Progress</h2>
             <span className="badge bg-light text-dark fs-6">{enrollments.length} Courses</span>
@@ -217,14 +223,33 @@ export default function Progress() {
                             {item.status}
                           </button>
                           
-                          {item.completed && (
+                          {item.type === 'course' && (
                             <button 
-                              className="btn btn-outline-success btn-sm"
-                              onClick={() => downloadCertificate(item)}
+                              className="btn btn-outline-warning btn-sm"
+                              onClick={() => navigate(`/student/reviews/${item.id}`)}
                             >
-                              <i className="fas fa-download me-1"></i>
-                              Download Certificate
+                              <i className="fas fa-star me-1"></i>
+                              Review Course
                             </button>
+                          )}
+                          
+                          {item.completed && (
+                            <>
+                              <button 
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => handleStartCourse(item)}
+                              >
+                                <i className="fas fa-arrow-right me-1"></i>
+                                Access Course
+                              </button>
+                              <button 
+                                className="btn btn-outline-success btn-sm"
+                                onClick={() => downloadCertificate(item)}
+                              >
+                                <i className="fas fa-download me-1"></i>
+                                Download Certificate
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>

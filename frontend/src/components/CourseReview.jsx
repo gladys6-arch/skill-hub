@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 
-function CourseReviews({ courseId }) {
+function CourseReview({ courseId }) {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState("");
   const [rating, setRating] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch reviews when course changes
   useEffect(() => {
     if (!courseId) return;
-    fetch(`http://127.0.0.1:5000/courses/${courseId}/reviews`)
+    fetch(`http://127.0.0.1:5000/api/courses/${courseId}/reviews`)
       .then((res) => res.json())
       .then((data) => setReviews(data))
       .catch((err) => console.error("Error fetching reviews:", err));
@@ -19,10 +18,14 @@ function CourseReviews({ courseId }) {
     e.preventDefault();
     if (!rating || !newReview) return alert("Please add both rating and review.");
 
+    const token = localStorage.getItem("token");
     setLoading(true);
-    fetch(`http://127.0.0.1:5000/courses/${courseId}/reviews`, {
+    fetch(`http://127.0.0.1:5000/api/courses/${courseId}/reviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
       body: JSON.stringify({ rating, review: newReview }),
     })
       .then((res) => res.json())
@@ -76,4 +79,4 @@ function CourseReviews({ courseId }) {
   );
 }
 
-export default CourseReviews;
+export default CourseReview;

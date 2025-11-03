@@ -19,7 +19,7 @@ export default function StudentRoutes() {
       <Route path="/courses" element={<AvailableCourses />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/certificate" element={<Certificate />} />
-      <Route path="/reviews" element={<StudentCourseReviews />} />
+      <Route path="/reviews/:courseId" element={<StudentCourseReviews />} />
       <Route path="/course/:courseId/content" element={<CourseContent />} />
       <Route path="/course/:courseId/rate" element={<CourseRating />} />
       <Route path="/chat/:sessionId" element={<StudentChat />} />

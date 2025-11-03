@@ -27,7 +27,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="container section" style={{ marginTop: '120px', textAlign: 'center' }}>
+      <div className="container section" style={{ marginTop: '150px', textAlign: 'center' }}>
         <div className="d-flex justify-content-center">
           <div className="spinner-border text-warning" role="status">
             <span className="visually-hidden">Loading dashboard...</span>
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container section" style={{ marginTop: '120px' }}>
+    <div className="container section" style={{ marginTop: '150px' }}>
       <div className="row">
         <div className="col-12">
           <div className="d-flex align-items-center justify-content-between mb-4">

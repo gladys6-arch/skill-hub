@@ -542,6 +542,66 @@ def get_skill_certificate(skill_id):
     
     return send_file(full_path, as_attachment=True, download_name=f"{skill.name}_certificate.pdf")
 
+@student_bp.route('/certificate/<int:course_id>/regenerate', methods=['POST'])
+@jwt_required()
+@role_required('student')
+def regenerate_certificate(course_id):
+    from models.certificate import Certificate
+    from utils.certificate_generator import save_certificate
+    import os
+
+    identity = get_jwt_identity()
+    user_id = identity if isinstance(identity, int) else identity.get('id')
+
+    # Check if student completed the course
+    total_modules = Module.query.filter_by(course_id=course_id).count()
+    completed_modules = ModuleProgress.query.filter_by(
+        student_id=user_id,
+        completed=True
+    ).join(Module).filter(Module.course_id == course_id).count()
+
+    modules_completed = total_modules > 0 and completed_modules == total_modules
+
+    # Check final quiz status
+    from models.course import Quiz, QuizAttempt
+    final_quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
+    quiz_passed = True
+
+    if final_quiz:
+        attempt = QuizAttempt.query.filter_by(
+            student_id=user_id,
+            quiz_id=final_quiz.id
+        ).order_by(QuizAttempt.completed_at.desc()).first()
+        quiz_passed = attempt and attempt.score >= final_quiz.passing_score
+
+    if not (modules_completed and quiz_passed):
+        return jsonify({'message': 'Certificate not available. Course not completed.'}), 403
+
+    course = Course.query.get(course_id)
+    user = User.query.get(user_id)
+
+    # Update regeneration count
+    cert = Certificate.query.filter_by(student_id=user_id, course_id=course_id).first()
+    if cert:
+        cert.regenerated_count = (cert.regenerated_count or 0) + 1
+        cert.last_downloaded = datetime.now()
+    else:
+        cert = Certificate(
+            student_id=user_id,
+            course_id=course_id,
+            file_path=f"certificates/cert_{user_id}_{course_id}.pdf",
+            regenerated_count=1,
+            last_downloaded=datetime.now()
+        )
+        db.session.add(cert)
+    
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Certificate regenerated successfully',
+        'download_url': f'/api/student/certificate/{course_id}'
+    })
+
 @student_bp.route('/request-teacher', methods=['POST'])
 @jwt_required()
 @role_required('student')
@@ -773,18 +833,29 @@ def get_final_quiz(course_id):
         else:
             return jsonify({'message': 'No quiz available for this course. Teacher needs to create a final quiz first.'}), 404
 
-    # Check if already attempted
-    existing_attempt = QuizAttempt.query.filter_by(
+    # Check quiz attempts and limits
+    all_attempts = QuizAttempt.query.filter_by(
         student_id=student_id,
         quiz_id=quiz.id
-    ).first()
+    ).filter(QuizAttempt.completed_at.isnot(None)).all()
 
-    if existing_attempt and existing_attempt.completed_at:
+    # Check if already passed
+    passed_attempt = next((a for a in all_attempts if a.score >= quiz.passing_score), None)
+    if passed_attempt:
         return jsonify({
-            'message': 'Quiz already completed',
-            'score': existing_attempt.score,
-            'passed': existing_attempt.score >= quiz.passing_score if existing_attempt.score else False
-        }), 400
+            'message': 'You have already passed this quiz and cannot retake it',
+            'score': passed_attempt.score,
+            'passed': True
+        }), 403
+
+    # Check attempt limit (3 attempts max)
+    if len(all_attempts) >= 3:
+        return jsonify({
+            'message': 'Maximum 3 attempts allowed. You have used all attempts.',
+            'attempts_used': len(all_attempts),
+            'max_attempts': 3,
+            'best_score': max(a.score for a in all_attempts) if all_attempts else 0
+        }), 403
 
     questions = Question.query.filter_by(quiz_id=quiz.id).all()
     questions_data = []
@@ -824,16 +895,31 @@ def submit_quiz_attempt(quiz_id):
         if not enrollment:
             return jsonify({'message': 'Not enrolled in this course'}), 403
 
-    # Check if already attempted
+    # Check quiz attempts and limits
+    all_attempts = QuizAttempt.query.filter_by(
+        student_id=student_id,
+        quiz_id=quiz_id
+    ).filter(QuizAttempt.completed_at.isnot(None)).all()
+
+    # Check if already passed
+    passed_attempt = next((a for a in all_attempts if a.score >= quiz.passing_score), None)
+    if passed_attempt:
+        return jsonify({'message': 'You have already passed this quiz and cannot retake it'}), 403
+
+    # Check attempt limit (3 attempts max)
+    if len(all_attempts) >= 3:
+        return jsonify({
+            'message': 'Maximum 3 attempts allowed. You have used all attempts.',
+            'attempts_used': len(all_attempts),
+            'max_attempts': 3
+        }), 403
+
+    # Create or find incomplete attempt
     existing_attempt = QuizAttempt.query.filter_by(
         student_id=student_id,
         quiz_id=quiz_id
-    ).first()
-
-    if existing_attempt and existing_attempt.completed_at:
-        return jsonify({'message': 'Quiz already completed'}), 400
-
-    # Create or update attempt
+    ).filter(QuizAttempt.completed_at.is_(None)).first()
+    
     if not existing_attempt:
         existing_attempt = QuizAttempt(
             student_id=student_id,
@@ -877,11 +963,18 @@ def submit_quiz_attempt(quiz_id):
 
     passed = score_percentage >= quiz.passing_score
 
+    # Get updated attempt count
+    attempts_used = len(all_attempts) + 1  # +1 for current attempt
+    can_retake = not passed and attempts_used < 3
+
     return jsonify({
         'message': 'Quiz submitted successfully',
         'score': score_percentage,
         'passed': passed,
         'total_questions': total_questions,
         'correct_answers': correct_answers,
-        'passing_score': quiz.passing_score
+        'passing_score': quiz.passing_score,
+        'attempts_used': attempts_used,
+        'max_attempts': 3,
+        'can_retake': can_retake
     }), 200

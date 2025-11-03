@@ -25,7 +25,7 @@ export default function TeacherDetails() {
   if (!teacher) return <div>Teacher not found</div>;
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <Link to="/admin/manage-users" className="btn btn-secondary mb-3">← Back to Users</Link>
       
       <div className="row">

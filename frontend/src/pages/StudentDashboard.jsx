@@ -58,13 +58,12 @@ export default function StudentDashboard() {
   }, []);
 
   return (
-    <div className="container section" style={{ marginTop: '120px' }}>
+    <div className="container section" style={{ marginTop: '150px' }}>
       <Link to="/" className="site-button" style={{ marginBottom: '20px', display: 'inline-block' }}>Back to Home</Link>
       <h2 className="lux-accent" style={{ marginBottom: '30px' }}>Student Dashboard</h2>
       <div className="mb-4" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
         <Link to="/student/courses" className="site-button">Available Courses</Link>
         <Link to="/student/progress" className="site-button">My Progress</Link>
-        <Link to="/student/certificate" className="site-button">Certificates</Link>
         <Link to="/student/request-session" className="site-button">Request Study Session</Link>
       </div>
 
@@ -113,9 +112,12 @@ export default function StudentDashboard() {
                         </div>
                       )}
 
-                      <Link to={`/student/course/${course.id}/rate`} className="site-button" style={{ padding: '8px 16px', fontSize: '14px' }}>
-                        Rate Course
-                      </Link>
+                      <div className="d-flex gap-2 flex-wrap">
+                        <Link to={`/student/course/${course.id}/rate`} className="site-button" style={{ padding: '8px 16px', fontSize: '14px', background: 'rgba(199,167,110,0.2)', border: '1px solid rgba(199,167,110,0.5)' }}>
+                          <i className="fas fa-star me-1"></i>
+                          Rate
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -123,7 +123,7 @@ export default function AddQuiz() {
   };
 
   return (
-    <div className="container mt-4" style={{ marginTop: '120px' }}>
+    <div className="container" style={{ marginTop: '150px' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <Link to="/teacher" className="btn btn-secondary mb-2">Back to Dashboard</Link>

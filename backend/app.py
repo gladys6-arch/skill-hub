@@ -30,6 +30,7 @@ def create_app():
     from routes.student_routes import student_bp
     from routes.student_module_progress import student_progress_bp
     from routes.payment_routes import payment_bp
+    from routes.course_routes import course_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
@@ -37,6 +38,7 @@ def create_app():
     app.register_blueprint(student_bp, url_prefix='/api/student')
     app.register_blueprint(student_progress_bp, url_prefix='/api/student', name='student_progress')
     app.register_blueprint(payment_bp, url_prefix='/api/payment')
+    app.register_blueprint(course_bp, url_prefix='/api')
 
     @app.route('/')
     def home():

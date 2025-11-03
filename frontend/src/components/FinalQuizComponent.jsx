@@ -215,6 +215,23 @@ const FinalQuizComponent = ({ courseId, onQuizComplete }) => {
                 <small className="text-muted">
                   Passing Score: {quiz.passing_score}%
                 </small>
+                
+                {!isPassed() && results.can_retake && (
+                  <div className="mt-3">
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="btn btn-warning"
+                    >
+                      Retake Quiz (Attempt {results.attempts_used + 1} of {results.max_attempts})
+                    </button>
+                  </div>
+                )}
+
+                {!isPassed() && !results.can_retake && (
+                  <div className="alert alert-danger mt-3">
+                    No more attempts remaining. You have used all {results.max_attempts} attempts.
+                  </div>
+                )}
               </div>
               <div className="col-md-4">
                 <div className="stats">
@@ -262,6 +279,16 @@ const FinalQuizComponent = ({ courseId, onQuizComplete }) => {
                   );
                 })}
               </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <button 
+                onClick={() => window.location.href = '/student/progress'}
+                className="btn btn-primary"
+              >
+                <i className="fas fa-book me-2"></i>
+                Back to My Courses
+              </button>
             </div>
           </div>
         </div>

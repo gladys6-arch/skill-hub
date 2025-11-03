@@ -102,3 +102,15 @@ export const markInteractiveElementComplete = (elementId) => {
 export const getMyRequests = () => {
   return axios.get(`${API_BASE_URL}/api/student/my-requests`, getAuthHeaders());
 };
+
+// Certificate functions
+export const regenerateCertificate = (courseId) => {
+  return axios.post(`${API_BASE_URL}/api/student/certificate/${courseId}/regenerate`, {}, getAuthHeaders());
+};
+
+export const downloadCertificate = (courseId) => {
+  return axios.get(`${API_BASE_URL}/api/student/certificate/${courseId}`, {
+    ...getAuthHeaders(),
+    responseType: 'blob'
+  });
+};
