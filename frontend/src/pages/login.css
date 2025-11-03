@@ -1,0 +1,131 @@
+/* ===== LOGIN PAGE STYLING ===== */
+
+/* Background layer for mountains */
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  background: #0A0A0A;
+  overflow: hidden;
+}
+
+.login-page .login-background {
+  position: absolute;
+  inset: 0;
+  background: url('YOUR-MOUNTAIN-BACKGROUND-URL.jpg') center/cover no-repeat;
+  opacity: 0.12;
+  filter: blur(2px);
+  z-index: 1;
+}
+
+.login-page .login-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(18,18,18,0.88);
+  border: 1px solid rgba(199,167,110,0.25);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  max-width: 450px;
+  width: 100%;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.login-card h1 {
+  margin-bottom: 20px;
+  font-size: 48px;
+  font-family: "Playfair Display", serif;
+  color: #FFF;
+}
+
+.login-card p {
+  color: #CFCAC2;
+  margin-bottom: 30px;
+  font-size: 18px;
+}
+
+.login-card input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(199,167,110,0.25);
+  padding: 14px;
+  width: 100%;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 15px;
+  margin-bottom: 20px;
+  transition: .3s ease;
+}
+
+.login-card input:focus {
+  border-color: #C7A76E;
+  box-shadow: 0 0 10px rgba(199,167,110,0.35);
+  outline: none;
+}
+
+.login-card .button-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.login-card .btn {
+  background: linear-gradient(120deg, #C7A76E, #A8895A);
+  color: #0D0D0D;
+  padding: 16px 42px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  transition: all .35s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.login-card .btn:hover {
+  background: transparent;
+  color: #C7A76E;
+  border: 2px solid #C7A76E;
+  box-shadow: 0 0 24px rgba(199,167,110,0.4);
+  transform: translateY(-4px) scale(1.04);
+  backdrop-filter: blur(8px);
+}
+
+.login-card .admin-link {
+  display: inline-block;
+  margin-top: 24px;
+  text-decoration: none;
+  background: linear-gradient(120deg, #C7A76E, #A8895A);
+  color: #0D0D0D !important;
+  padding: 14px 38px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  transition: .35s ease;
+}
+
+.login-card .admin-link:hover {
+  background: transparent !important;
+  color: #C7A76E !important;
+  border: 2px solid #C7A76E !important;
+  box-shadow: 0 0 22px rgba(199,167,110,0.4);
+  transform: translateY(-4px) scale(1.05);
+}
+
+/* Ensure responsive */
+@media (max-width: 600px) {
+  .login-card {
+    padding: 40px 20px;
+  }
+  .login-card h1 {
+    font-size: 36px;
+  }
+  .login-card .button-area {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
