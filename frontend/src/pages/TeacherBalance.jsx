@@ -23,11 +23,11 @@ export default function TeacherBalance() {
     fetchBalance();
   }, []);
 
-  if (loading) return <div className="container mt-4">Loading...</div>;
-  if (error) return <div className="container mt-4 text-danger">{error}</div>;
+  if (loading) return <div className="container" style={{ marginTop: '150px' }}>Loading...</div>;
+  if (error) return <div className="container text-danger" style={{ marginTop: '150px' }}>{error}</div>;
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <Link to="/teacher" className="back-button">Back to Dashboard</Link>
       <h3>My Balance</h3>
 

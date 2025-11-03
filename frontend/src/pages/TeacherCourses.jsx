@@ -23,7 +23,7 @@ export default function TeacherCourses() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>My Courses</h3>
         <Link to="/teacher/add-course" className="btn btn-success">Add New Course</Link>

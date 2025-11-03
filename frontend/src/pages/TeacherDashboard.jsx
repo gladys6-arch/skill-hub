@@ -7,8 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, 
 export default function TeacherDashboard() {
   const [courses, setCourses] = useState([]);
   const [progress, setProgress] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [showNotification, setShowNotification] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -68,9 +67,8 @@ export default function TeacherDashboard() {
         setCourses(coursesRes.data);
         setProgress(progressRes.data);
 
-        const pending = requestsRes.data.filter(r => r.status === 'pending');
-        setPendingRequests(pending);
-        setShowNotification(pending.length > 0);
+        const pendingCount = requestsRes.data.filter(r => r.status === 'pending').length;
+        setPendingRequestsCount(pendingCount);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError(err.response?.data?.message || "Failed to load dashboard data. Please check your connection and try again.");
@@ -83,7 +81,7 @@ export default function TeacherDashboard() {
   }, []);
 
   if (loading) return (
-    <div className="container section" style={{ marginTop: '120px', textAlign: 'center' }}>
+    <div className="container section" style={{ marginTop: '150px', textAlign: 'center' }}>
       <div className="d-flex justify-content-center">
         <div className="spinner-border text-warning" role="status">
           <span className="visually-hidden">Loading...</span>
@@ -94,7 +92,7 @@ export default function TeacherDashboard() {
   );
 
   if (error) return (
-    <div className="container section" style={{ marginTop: '120px' }}>
+    <div className="container section" style={{ marginTop: '150px' }}>
       <div className="card" style={{ borderColor: '#dc3545' }}>
         <div className="card-body">
           <h4 className="card-title text-danger">Error Loading Dashboard</h4>
@@ -107,33 +105,9 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="container section" style={{ marginTop: '120px' }}>
+    <div className="container section" style={{ marginTop: '150px' }}>
       <Link to="/" className="site-button" style={{ marginBottom: '20px', display: 'inline-block' }}>Back to Home</Link>
       <h3 className="lux-accent" style={{ marginBottom: '30px' }}>Teacher Dashboard</h3>
-
-      {/* Notification for pending requests */}
-      {showNotification && (
-        <div className="card mb-4" style={{ borderColor: '#17a2b8', background: 'rgba(23,162,184,0.1)' }}>
-          <div className="card-body">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <strong className="lux-accent">📚 New Study Session Request!</strong>
-                <p className="mb-0 mt-1">You have {pendingRequests.length} pending student request{pendingRequests.length > 1 ? 's' : ''} for study sessions.</p>
-              </div>
-              <div>
-                <Link to="/teacher/requests" className="site-button me-2">View Requests</Link>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowNotification(false)}
-                  aria-label="Close"
-                  style={{ filter: 'invert(1)' }}
-                ></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="mb-4">
         <Link to="/teacher/add-skill" className="btn btn-primary me-2">Add New Skill</Link>
@@ -142,7 +116,14 @@ export default function TeacherDashboard() {
           <i className="fas fa-question-circle me-1"></i>
           My Quizzes
         </Link>
-        <Link to="/teacher/requests" className="btn btn-info me-2">Student Requests</Link>
+        <Link to="/teacher/requests" className="btn btn-info me-2 position-relative">
+          Student Requests
+          {pendingRequestsCount > 0 && (
+            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {pendingRequestsCount}
+            </span>
+          )}
+        </Link>
         <Link to="/teacher/sessions" className="btn btn-secondary me-2">Chat Sessions</Link>
         <Link to="/teacher/balance" className="btn btn-dark me-2">View Balance</Link>
         <Link to="/teacher/subscription" className="btn btn-outline-primary">View Subscription</Link>

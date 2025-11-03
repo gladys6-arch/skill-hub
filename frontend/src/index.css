@@ -86,7 +86,7 @@ h1, h2, h3, h4 {
 }
 
 .hero-title {
-  font-size: 72px;
+  font-size: clamp(32px, 8vw, 72px);
   font-weight: 700;
   opacity: 0;
   animation: fadeUp 1.2s ease forwards;
@@ -150,6 +150,7 @@ button, .button, .site-button {
   position: relative;
   overflow: hidden;
   font-weight: 700;
+  vertical-align: top;
 }
 
 /* Shine streak */
@@ -176,21 +177,33 @@ button:hover {
   transform: translateY(-4px) scale(1.04);
 }
 
-/* Admin link */
-.admin-link {
-  font-size: 16px;
-  margin-top: 14px;
-  text-align: center;
-  display: block;
+/* Ghost button styling */
+.ghost-btn {
+  display: inline-block;
+  padding: 12px 26px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  border: 1px solid rgba(199,167,110,0.6);
+  background: transparent;
   color: #C7A76E;
-  opacity: .85;
-  transition: .3s;
+  cursor: pointer;
+  margin: 12px;
+  transition: all .35s ease;
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: top;
 }
-.admin-link:hover {
-  opacity: 1;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+
+.ghost-btn:hover {
+  background: rgba(199,167,110,0.1);
+  color: #FFF;
+  border: 2px solid #C7A76E;
+  box-shadow: 0 0 20px rgba(199,167,110,0.3);
+  transform: translateY(-2px);
+  text-decoration: none;
 }
+
+
 
 /* ====================
    INPUT FIELDS
@@ -380,6 +393,46 @@ a:hover::after, .link:hover::after {
 @keyframes lightRays {
   0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.1; }
   50% { transform: rotate(180deg) scale(1.2); opacity: 0.2; }
+}
+
+/* ====================
+   RESPONSIVE DESIGN
+==================== */
+@media (max-width: 768px) {
+  /* Mobile margins */
+  .container[style*="marginTop"] {
+    margin-top: 100px !important;
+  }
+  
+  /* Button groups */
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Teacher nav responsive */
+  .teacher-nav {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+  
+  /* Mobile buttons */
+  .btn-lux, button, .button, .site-button, .ghost-btn {
+    margin: 8px 0;
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  /* Cards responsive */
+  .card {
+    margin-bottom: 20px;
+  }
+  
+  /* Nav links mobile */
+  .nav-links {
+    gap: 1rem !important;
+  }
 }
 
 /* ===== Courses Section ===== */

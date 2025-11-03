@@ -41,7 +41,7 @@ export default function AddCourse() {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <Link to="/teacher" className="back-button">Back to Dashboard</Link>
       <h3>Add New Course</h3>
       {success && <div className="alert alert-success">Course added successfully!</div>}

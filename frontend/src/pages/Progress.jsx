@@ -82,6 +82,9 @@ export default function Progress() {
   const handleStartCourse = (item) => {
     if (item.type === 'course') {
       navigate(`/student/course/${item.id}/content`);
+    } else if (item.type === 'skill') {
+      const skillId = item.id.replace('skill_', '');
+      navigate(`/student/course/${skillId}/content`);
     }
   };
 
@@ -92,39 +95,42 @@ export default function Progress() {
         ? `http://127.0.0.1:5000/api/student/certificate/${item.id}`
         : `http://127.0.0.1:5000/api/student/skill-certificate/${item.id.replace('skill_', '')}`;
 
-      const response = await fetch(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.get(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
       });
 
-      if (response.ok) {
-        // Get the filename from the Content-Disposition header
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `${item.title}_certificate.html`; // Default fallback
-
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-          if (filenameMatch) {
-            filename = filenameMatch[1];
-          }
+      const blob = new Blob([response.data], { 
+        type: response.headers['content-type'] || 'text/html' 
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `${item.title}_certificate.html`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
         }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename.replace('.pdf', '.html');
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        const errorText = await response.text();
-        console.error('Certificate download failed:', response.status, errorText);
-        alert(`Failed to download certificate: ${response.status} ${response.statusText}`);
       }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
     } catch (err) {
       console.error('Error downloading certificate:', err);
-      alert('Error downloading certificate: ' + err.message);
+      if (err.response?.status === 400) {
+        alert('Certificate not available. Complete all modules and pass the final quiz first.');
+      } else {
+        alert('Error downloading certificate. Please try again.');
+      }
     }
   };
 
@@ -210,7 +216,6 @@ export default function Progress() {
                             <i className={`fas ${item.completed ? 'fa-trophy' : item.progress > 0 ? 'fa-play' : 'fa-rocket'} me-2`}></i>
                             {item.status}
                           </button>
-                          
                           
                           {item.completed && (
                             <button 

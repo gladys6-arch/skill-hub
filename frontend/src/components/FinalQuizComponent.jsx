@@ -52,7 +52,20 @@ const FinalQuizComponent = ({ courseId, onQuizComplete }) => {
       }
     } catch (error) {
       console.error('Error loading final quiz:', error);
-      setError('Failed to load final quiz. Please try again.');
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData.message?.includes('Complete all modules')) {
+          setError(`Please complete all modules first. Progress: ${errorData.modules_completed}/${errorData.total_modules} modules completed.`);
+        } else if (errorData.message?.includes('already completed')) {
+          setError('You have already completed this quiz.');
+        } else {
+          setError(errorData.message || 'Cannot access final quiz at this time.');
+        }
+      } else if (error.response?.status === 404) {
+        setError('No final quiz available for this course.');
+      } else {
+        setError('Failed to load final quiz. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -120,13 +133,12 @@ const FinalQuizComponent = ({ courseId, onQuizComplete }) => {
       });
 
       const response = await submitFinalQuizAttempt(quiz.quiz_id, responses);
-      const resultsResponse = await getQuizResults(attemptId);
 
-      setResults(resultsResponse.data);
+      setResults(response.data);
       setIsActive(false);
 
       if (onQuizComplete) {
-        onQuizComplete(resultsResponse.data);
+        onQuizComplete(response.data);
       }
     } catch (error) {
       console.error('Error submitting final quiz:', error);

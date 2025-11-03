@@ -49,10 +49,13 @@ def stk_push(phone_number, amount, account_reference, transaction_desc):
         "PartyA": phone_number,
         "PartyB": Config.MPESA_SHORTCODE,
         "PhoneNumber": phone_number,
-        "CallBackURL": "https://your-domain.com/api/payment/callback",  # Replace with your actual callback URL
+        "CallBackURL": "https://webhook.site/3c8d42d2-b372-4e47-8d48-991415278abc",
         "AccountReference": account_reference,
         "TransactionDesc": transaction_desc
     }
+    
+    print(f"STK Push payload: {payload}")
 
     response = requests.post(url, json=payload, headers=headers)
+    print(f"STK Push Response: {response.status_code} - {response.text}")
     return response.json()

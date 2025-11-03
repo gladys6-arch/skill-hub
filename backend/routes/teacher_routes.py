@@ -4,6 +4,7 @@ from models import User, Course, Module, Skill, Subscription
 from models.course import Enrollment, SkillEnrollment, Quiz, Question, Answer, QuizAttempt
 from extensions import db
 from utils.decorators import role_required
+from datetime import datetime
 
 # Import additional endpoint files to register their routes
 # Note: These files need to be updated to import teacher_bp from this module
@@ -76,8 +77,31 @@ def get_teacher_requests():
         'student_name': r.student.full_name,
         'message': r.message,
         'status': r.status,
-        'date_created': r.date_created.strftime('%Y-%m-%d')
+        'response_message': r.response_message,
+        'date_created': r.date_created.strftime('%Y-%m-%d'),
+        'date_responded': r.date_responded.strftime('%Y-%m-%d') if r.date_responded else None
     } for r in requests])
+
+@teacher_bp.route('/requests/<int:request_id>/respond', methods=['POST'])
+@jwt_required()
+@role_required('teacher')
+def respond_to_request(request_id):
+    from models.teacher_request import TeacherRequest
+    
+    data = request.get_json()
+    identity = get_jwt_identity()
+    teacher_id = identity if isinstance(identity, int) else identity.get('id')
+
+    request_obj = TeacherRequest.query.get_or_404(request_id)
+    if request_obj.teacher_id != teacher_id:
+        return jsonify({'message': 'Unauthorized'}), 403
+
+    request_obj.status = data['status']
+    request_obj.response_message = data.get('message', '')
+    request_obj.date_responded = datetime.now()
+    
+    db.session.commit()
+    return jsonify({'message': f'Request {data["status"]} successfully'})
 
 @teacher_bp.route('/requests/<int:request_id>', methods=['PUT'])
 @jwt_required()
@@ -550,7 +574,14 @@ def get_teacher_subscription():
 
     subscription = Subscription.query.filter_by(teacher_id=teacher_id).first()
     if not subscription:
-        return jsonify({'message': 'No subscription found'}), 404
+        return jsonify({
+            'id': None,
+            'plan_type': 'Free',
+            'status': 'inactive',
+            'renewal_date': None,
+            'created_at': None,
+            'message': 'No active subscription. Contact support to upgrade your plan.'
+        })
 
     return jsonify({
         'id': subscription.id,
@@ -588,18 +619,10 @@ def get_teacher_quizzes():
             'created_at': quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else None
         })
 
-    response = jsonify({
+    return jsonify({
         'quizzes': quiz_data,
         'total_quizzes': len(quiz_data)
     })
-
-    # Add CORS headers explicitly for this endpoint
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-
-    return response
 
 # Final Quiz Management for Teachers
 @teacher_bp.route('/courses/<int:course_id>/final-quiz', methods=['POST'])
@@ -628,18 +651,10 @@ def create_final_quiz(course_id):
     db.session.add(quiz)
     db.session.commit()
 
-    response = jsonify({
+    return jsonify({
         'message': 'Final quiz created successfully',
         'quiz_id': quiz.id
-    })
-
-    # Add CORS headers explicitly for this endpoint
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-
-    return response, 201
+    }), 201
 
 @teacher_bp.route('/courses/<int:course_id>/final-quiz', methods=['GET'])
 @jwt_required()
@@ -671,20 +686,12 @@ def get_final_quiz(course_id):
             } for answer in answers]
         })
 
-    response = jsonify({
+    return jsonify({
         'quiz_id': quiz.id,
         'title': quiz.title,
         'passing_score': quiz.passing_score,
         'questions': questions_data
     })
-
-    # Add CORS headers explicitly for this endpoint
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-
-    return response
 
 @teacher_bp.route('/quizzes/<int:quiz_id>/questions', methods=['POST'])
 @jwt_required()
@@ -718,15 +725,7 @@ def add_quiz_question(quiz_id):
         db.session.add(answer)
     db.session.commit()
 
-    response = jsonify({'message': 'Question added successfully'})
-
-    # Add CORS headers explicitly for this endpoint
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-
-    return response, 201
+    return jsonify({'message': 'Question added successfully'}), 201
 
 @teacher_bp.route('/courses/<int:course_id>/final-quiz/results', methods=['GET'])
 @jwt_required()

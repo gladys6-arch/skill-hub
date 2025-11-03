@@ -97,3 +97,8 @@ export const getInteractiveElements = (moduleId) => {
 export const markInteractiveElementComplete = (elementId) => {
   return axios.post(`${API_BASE_URL}/api/student/interactive-elements/${elementId}/complete`, {}, getAuthHeaders());
 };
+
+// Teacher Request functions
+export const getMyRequests = () => {
+  return axios.get(`${API_BASE_URL}/api/student/my-requests`, getAuthHeaders());
+};

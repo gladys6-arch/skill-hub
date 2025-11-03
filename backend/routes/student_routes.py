@@ -1,13 +1,32 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, send_file, Response
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.decorators import role_required
-from models.course import Course, Enrollment, SkillEnrollment, Skill, Module, ModuleProgress
+from models.course import Course, Enrollment, SkillEnrollment, Skill, Module, ModuleProgress, Quiz, Question, Answer, QuizAttempt, QuizResponse
 from models import User
 from datetime import datetime
 import html
 
 student_bp = Blueprint('student_bp', __name__)
+
+@student_bp.route('/my-requests', methods=['GET'])
+@jwt_required()
+@role_required('student')
+def get_my_requests():
+    from models.teacher_request import TeacherRequest
+    identity = get_jwt_identity()
+    student_id = identity if isinstance(identity, int) else identity.get('id')
+    
+    requests = TeacherRequest.query.filter_by(student_id=student_id).all()
+    return jsonify([{
+        'id': r.id,
+        'teacher_name': r.teacher.full_name,
+        'message': r.message,
+        'status': r.status,
+        'response_message': r.response_message,
+        'date_created': r.date_created.strftime('%Y-%m-%d'),
+        'date_responded': r.date_responded.strftime('%Y-%m-%d') if r.date_responded else None
+    } for r in requests])
 
 @student_bp.route('/enroll', methods=['POST'])
 @jwt_required()
@@ -352,7 +371,6 @@ def get_course_rating(course_id):
 def get_certificate(course_id):
     from models.certificate import Certificate
     from utils.certificate_generator import save_certificate
-    from flask import send_file
     import os
 
     identity = get_jwt_identity()
@@ -397,7 +415,6 @@ def get_certificate(course_id):
     user = User.query.get(user_id)
 
     # Calculate completed modules count and total modules
-    from models.course import ModuleProgress
     completed_modules_count = ModuleProgress.query.filter_by(
         student_id=user_id,
         completed=True
@@ -472,7 +489,6 @@ def get_certificate(course_id):
         completion_date=completion_date
     )
 
-    from flask import Response
     # Sanitize filename to remove special characters that might cause issues
     safe_filename = "".join(c for c in course.title if c.isalnum() or c in (' ', '-', '_')).rstrip()
     filename = f"{safe_filename}_certificate.html"
@@ -481,11 +497,7 @@ def get_certificate(course_id):
         html_content,
         mimetype='text/html; charset=utf-8',
         headers={
-            'Content-Disposition': f'attachment; filename="{filename}"',
-            'Access-Control-Allow-Origin': 'http://localhost:5173',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+            'Content-Disposition': f'attachment; filename="{filename}"'
         }
     )
     return response
@@ -496,7 +508,6 @@ def get_certificate(course_id):
 def get_skill_certificate(skill_id):
     from models.certificate import Certificate
     from utils.certificate_generator import save_certificate
-    from flask import send_file
     import os
     
     identity = get_jwt_identity()
@@ -746,23 +757,21 @@ def get_final_quiz(course_id):
     if not enrollment:
         return jsonify({'message': 'Not enrolled in this course'}), 403
 
-    # Check if all modules are completed
-    total_modules = Module.query.filter_by(course_id=course_id).count()
-    completed_modules = ModuleProgress.query.filter_by(
-        student_id=student_id,
-        completed=True
-    ).join(Module).filter(Module.course_id == course_id).count()
-
-    if total_modules > 0 and completed_modules < total_modules:
-        return jsonify({
-            'message': 'Complete all modules before taking the final quiz',
-            'modules_completed': completed_modules,
-            'total_modules': total_modules
-        }), 400
+    # Optional: Check module completion (commented out to allow quiz access)
+    # total_modules = Module.query.filter_by(course_id=course_id).count()
+    # completed_modules = ModuleProgress.query.filter_by(
+    #     student_id=student_id,
+    #     completed=True
+    # ).join(Module).filter(Module.course_id == course_id).count()
 
     quiz = Quiz.query.filter_by(course_id=course_id, is_final_quiz=True).first()
     if not quiz:
-        return jsonify({'message': 'No final quiz available for this course'}), 404
+        # Check if any quiz exists for this course
+        any_quiz = Quiz.query.filter_by(course_id=course_id).first()
+        if any_quiz:
+            return jsonify({'message': f'Quiz exists but is not marked as final quiz. Quiz ID: {any_quiz.id}, is_final_quiz: {any_quiz.is_final_quiz}'}), 404
+        else:
+            return jsonify({'message': 'No quiz available for this course. Teacher needs to create a final quiz first.'}), 404
 
     # Check if already attempted
     existing_attempt = QuizAttempt.query.filter_by(

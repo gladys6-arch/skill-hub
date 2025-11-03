@@ -113,20 +113,27 @@ export default function ManageUsers() {
                       <div className="btn-group" role="group">
                         <Link
                           to={`/admin/${user.role}s/${user.id}/details`}
-                          className="btn btn-outline-primary btn-sm"
+                          className="btn btn-primary btn-sm shadow-sm"
                           title="View Details"
+                          style={{
+                            background: 'linear-gradient(135deg, #007bff, #0056b3)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontWeight: '500',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = 'translateY(-1px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                          }}
                         >
-                          <i className="fas fa-eye"></i>
+                          <i className="fas fa-eye me-1"></i>
+                          View
                         </Link>
-                        {user.role === 'student' && (
-                          <Link
-                            to={`/admin/student-progress`}
-                            className="btn btn-outline-info btn-sm"
-                            title="View Student Progress"
-                          >
-                            <i className="fas fa-chart-line"></i>
-                          </Link>
-                        )}
                         <button
                           className="btn btn-outline-danger btn-sm"
                           onClick={() => removeUser(user.id)}

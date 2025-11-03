@@ -34,14 +34,49 @@ export default function CourseDetails() {
 
     try {
       const token = localStorage.getItem("token");
+      const phoneNumber = prompt("Enter M-Pesa phone number (254XXXXXXXXX):\nFor sandbox testing use: 254708374149");
+      
+      if (!phoneNumber) {
+        setIsPaying(false);
+        return;
+      }
+      
+      console.log(`Initiating payment for phone: ${phoneNumber}`);
+      
       const res = await axios.post(
-        `${API}/payment/initiate`,
-        { amount: course.price, course_id: course.id },
+        `${API}/payment/pay`,
+        { 
+          course_id: course.id,
+          phone_number: phoneNumber
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("M-Pesa payment initiated! Please check your phone.");
-      console.log("Payment response:", res.data);
+      const checkoutRequestId = res.data.checkout_request_id;
+      
+      // Poll payment status every 5 seconds
+      const pollStatus = setInterval(async () => {
+        try {
+          const statusRes = await axios.post(
+            `${API}/payment/verify-and-enroll/${checkoutRequestId}`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (statusRes.data.status === 'paid' && statusRes.data.enrolled) {
+            clearInterval(pollStatus);
+            alert("Payment successful! You are now enrolled and can access the course.");
+            window.location.href = '/student/progress';
+          }
+        } catch (err) {
+          console.error("Status check error:", err);
+        }
+      }, 5000);
+
+      // Stop polling after 2 minutes
+      setTimeout(() => clearInterval(pollStatus), 120000);
+      
+      alert(`M-Pesa payment initiated for ${phoneNumber}! Please check your phone.\nIf using sandbox, use test number: 254708374149`);
     } catch (err) {
       console.error("Payment error:", err);
       alert("Failed to start payment. Try again.");

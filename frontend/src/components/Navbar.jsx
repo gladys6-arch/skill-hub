@@ -23,7 +23,7 @@ function Navbar() {
 
         {/* Mobile menu toggle */}
         <button className="menu-toggle" onClick={toggleMenu} style={{ display: 'none', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '24px', cursor: 'pointer' }}>
-          ☰
+          {isMenuOpen ? '✕' : '☰'}
         </button>
 
         {user ? (

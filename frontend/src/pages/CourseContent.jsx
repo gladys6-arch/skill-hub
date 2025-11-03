@@ -5,6 +5,25 @@ import QuizComponent from '../components/QuizComponent';
 import InteractiveElement from '../components/InteractiveElement';
 import FinalQuizComponent from '../components/FinalQuizComponent';
 
+// Helper functions for interactive elements
+const getElementIcon = (elementType) => {
+  switch (elementType) {
+    case 'video': return 'play-circle';
+    case 'simulation': return 'cogs';
+    case 'quiz': return 'question-circle';
+    default: return 'play';
+  }
+};
+
+const getElementTitle = (elementType) => {
+  switch (elementType) {
+    case 'video': return 'Video';
+    case 'simulation': return 'Simulation';
+    case 'quiz': return 'Quiz';
+    default: return 'Interactive';
+  }
+};
+
 export default function CourseContent() {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -110,13 +129,16 @@ export default function CourseContent() {
 
   const fetchCourseContent = async () => {
     try {
+      console.log('Fetching course content for courseId:', courseId);
       const res = await getEnrolledCourseContent(courseId);
+      console.log('Course content response:', res.data);
       setCourseData(res.data);
       if (res.data.modules.length > 0) {
         setSelectedModule(res.data.modules[0]);
       }
     } catch (error) {
       console.error('Error fetching course content:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -549,7 +571,7 @@ export default function CourseContent() {
                           </button>
                           <small className="text-muted d-block mt-2">
                             <i className="fas fa-info-circle me-1"></i>
-                            Mark this module as read to update your course progress (75% total)
+                            Mark this module as read to update your course progress
                           </small>
                         </div>
                       </div>

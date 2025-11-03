@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCourses, enrollInCourse, enrollInSkill, payForCourse } from "../services/studentService";
+import axios from "axios";
 
 export default function AvailableCourses() {
   const [courses, setCourses] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [paymentModal, setPaymentModal] = useState({ show: false, course: null });
@@ -12,12 +14,31 @@ export default function AvailableCourses() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const navigate = useNavigate();
 
+  const isEnrolled = (courseId) => {
+    return enrollments.some(enrollment => 
+      enrollment.id === courseId || enrollment.id === `skill_${courseId}`
+    );
+  };
+
+  const fetchEnrollments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://127.0.0.1:5000/api/student/my-progress', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEnrollments(res.data);
+    } catch (err) {
+      console.error('Error fetching enrollments:', err);
+    }
+  };
+
   const handleEnroll = async (courseId) => {
     try {
       if (String(courseId).startsWith('skill_')) {
         const skillId = courseId.replace('skill_', '');
         await enrollInSkill(skillId);
         alert('Successfully enrolled in skill!');
+        fetchEnrollments();
       } else {
         // Check if course has a price
         const course = courses.find(c => c.id === courseId);
@@ -28,6 +49,7 @@ export default function AvailableCourses() {
           // Free course - enroll directly
           await enrollInCourse(courseId);
           alert('Successfully enrolled in course!');
+          fetchEnrollments();
         }
       }
     } catch (err) {
@@ -47,10 +69,30 @@ export default function AvailableCourses() {
       alert('STK Push initiated! Please check your phone and enter your M-Pesa PIN to complete the payment.');
       setPaymentModal({ show: false, course: null });
       setPhoneNumber("");
+      setTimeout(() => fetchEnrollments(), 2000);
     } catch (err) {
       alert('Payment initiation failed: ' + (err.response?.data?.msg || err.message));
     } finally {
       setPaymentLoading(false);
+    }
+  };
+
+  const handleManualEnrollment = async (courseId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://127.0.0.1:5000/api/payment/manual-enroll',
+        { course_id: courseId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Enrollment verified! You now have access to the course.');
+      fetchEnrollments();
+    } catch (err) {
+      if (err.response?.status === 400) {
+        alert('No valid payment found. Please complete payment first or contact support.');
+      } else {
+        alert('Enrollment failed. Please contact support if you have paid.');
+      }
     }
   };
 
@@ -68,6 +110,7 @@ export default function AvailableCourses() {
     };
 
     fetchCourses();
+    fetchEnrollments();
   }, []);
 
   if (loading) return (
@@ -159,15 +202,45 @@ export default function AvailableCourses() {
                   </div>
                 )}
 
-                <p style={{ color: '#C7A76E', fontSize: '14px', marginBottom: '20px' }}>
+                <p style={{ color: '#C7A76E', fontSize: '14px', marginBottom: '15px' }}>
                   <strong>Price:</strong> KES {course.price || "Free"}
                 </p>
-                <button
-                  className="course-btn"
-                  onClick={() => handleEnroll(course.id)}
-                >
-                  {course.price && course.price > 0 ? 'Pay & Enroll' : 'Enroll Now'}
-                </button>
+                
+                {isEnrolled(course.id) ? (
+                  <button
+                    className="course-btn"
+                    onClick={() => navigate('/student/progress')}
+                    style={{
+                      backgroundColor: '#28a745',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Enrolled ✓ → My Progress
+                  </button>
+                ) : (
+                  <div>
+                    <button
+                      className="course-btn"
+                      onClick={() => handleEnroll(course.id)}
+                    >
+                      {course.price && course.price > 0 ? 'Pay & Enroll' : 'Enroll Now'}
+                    </button>
+                    {course.price && course.price > 0 && (
+                      <button
+                        className="course-btn"
+                        onClick={() => handleManualEnrollment(course.id)}
+                        style={{
+                          backgroundColor: '#6c757d',
+                          marginTop: '8px',
+                          fontSize: '12px',
+                          padding: '8px 12px'
+                        }}
+                      >
+                        Already Paid? Click Here
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -211,7 +284,7 @@ export default function AvailableCourses() {
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="254712345678"
+                placeholder="254708374149 (sandbox test number)"
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -222,6 +295,9 @@ export default function AvailableCourses() {
                   fontSize: '16px'
                 }}
               />
+              <small style={{ color: '#C7A76E', marginTop: '5px', display: 'block' }}>
+                Use 254708374149 for sandbox testing
+              </small>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button

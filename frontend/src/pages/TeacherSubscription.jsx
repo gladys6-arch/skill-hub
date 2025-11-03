@@ -14,11 +14,7 @@ export default function TeacherSubscription() {
         setSubscription(response.data);
       } catch (err) {
         console.error("Error fetching subscription:", err);
-        if (err.response && err.response.status === 404) {
-          setError("No subscription found. Please contact support to set up your subscription.");
-        } else {
-          setError("Failed to load subscription details.");
-        }
+        setError("Failed to load subscription details.");
       } finally {
         setLoading(false);
       }
@@ -27,11 +23,11 @@ export default function TeacherSubscription() {
     fetchSubscription();
   }, []);
 
-  if (loading) return <div className="container mt-4">Loading subscription details...</div>;
-  if (error) return <div className="container mt-4 text-danger">{error}</div>;
+  if (loading) return <div className="container" style={{ marginTop: '150px' }}>Loading subscription details...</div>;
+  if (error) return <div className="container text-danger" style={{ marginTop: '150px' }}>{error}</div>;
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ marginTop: '150px' }}>
       <Link to="/teacher" className="back-button">Back to Dashboard</Link>
       <h3>Subscription Details</h3>
       <div className="card">
@@ -57,6 +53,11 @@ export default function TeacherSubscription() {
           <p className="card-text">
             <strong>Created At:</strong> {subscription.created_at || "N/A"}
           </p>
+          {subscription.message && (
+            <div className="alert alert-info mt-3">
+              {subscription.message}
+            </div>
+          )}
         </div>
       </div>
     </div>

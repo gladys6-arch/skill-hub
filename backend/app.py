@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from extensions import db, jwt, migrate
 from config import Config
@@ -7,12 +7,14 @@ def create_app():
     app = Flask(__name__, template_folder='templates')
     app.config.from_object(Config)
 
-    CORS(app, origins=["http://localhost:5173"], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], expose_headers=['Authorization', 'Content-Disposition'])
+    CORS(app, origins=["http://localhost:5173", "http://localhost:5174"], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], expose_headers=['Authorization', 'Content-Disposition'])
 
     # Add CORS headers for all responses
     @app.after_request
     def add_cors_headers(response):
-        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        origin = request.headers.get('Origin')
+        if origin in ['http://localhost:5173', 'http://localhost:5174']:
+            response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
