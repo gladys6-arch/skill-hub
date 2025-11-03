@@ -7,13 +7,13 @@ def create_app():
     app = Flask(__name__, template_folder='templates')
     app.config.from_object(Config)
 
-    CORS(app, origins=["http://localhost:5173", "http://localhost:5174"], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], expose_headers=['Authorization', 'Content-Disposition'])
+    CORS(app, origins=["http://localhost:5173", "http://localhost:5174", "https://skill-hub-frontend.onrender.com"], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], expose_headers=['Authorization', 'Content-Disposition'])
 
     # Add CORS headers for all responses
     @app.after_request
     def add_cors_headers(response):
         origin = request.headers.get('Origin')
-        if origin in ['http://localhost:5173', 'http://localhost:5174']:
+        if origin in ['http://localhost:5173', 'http://localhost:5174', 'https://skill-hub-frontend.onrender.com']:
             response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
