@@ -74,7 +74,7 @@ npm run dev
 3. **Access Application**: Open http://localhost:5173
 
 ### Default Accounts
-- **Admin**: admin@skillhub.com / admin123
+- **Admin**: jobk@gmail.com / admin123
 - **Teacher**: teacher@skillhub.com / teacher123
 - **Student**: student@skillhub.com / student123
 
